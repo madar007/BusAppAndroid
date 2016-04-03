@@ -345,7 +345,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
         }
 
-        //  *********************** Take care of setting bounds:
+        //  *********************** Take care of setting bounds :
         LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
     }

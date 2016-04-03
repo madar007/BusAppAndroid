@@ -293,10 +293,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng busLocation = new LatLng(44.975312, -93.226732);     // positioned at Oak St.
         LatLng loc = new LatLng(44.97233, -93.2437);
         Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(loc).title("This is a bus")
+                        .position(busLocation).title("This is a bus")
                         .anchor((float) 0.5, (float) 0.5)
                         .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
-        animateMarker(marker, loc, false);          // will go here
+        //animateMarker(marker, loc, false);          // will go here
         //rotateMarker(marker,(float)90, mMap);
 
         // ************************* Parse route and corresponding stops from xml
@@ -347,7 +347,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //  *********************** Take care of setting bounds :
         LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 700, 400, 2));
     }
 
 

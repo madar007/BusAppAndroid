@@ -7,6 +7,9 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
@@ -46,7 +49,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
 
@@ -269,6 +272,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+//        mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -293,9 +299,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng busLocation = new LatLng(44.975312, -93.226732);     // positioned at Oak St.
         LatLng loc = new LatLng(44.97233, -93.2437);
         Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(busLocation).title("This is a bus")
-                        .anchor((float) 0.5, (float) 0.5)
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
+                .position(busLocation).title("This is a bus")
+                .anchor((float) 0.5, (float) 0.5)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
         //animateMarker(marker, loc, false);          // will go here
         //rotateMarker(marker,(float)90, mMap);
 
@@ -402,7 +408,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 long elapsed = SystemClock.uptimeMillis() - start;
                 float t = interpolator.getInterpolation((float) elapsed / duration);
 
-                float rot = t * toRotation + (1 -t) * startRotation;
+                float rot = t * toRotation + (1 - t) * startRotation;
 
                 marker.setRotation(-rot > 180 ? rot / 2 : rot);
                 if (t < 1.0) {
@@ -411,6 +417,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.mainmenu, menu);
+        return true;
     }
 
 

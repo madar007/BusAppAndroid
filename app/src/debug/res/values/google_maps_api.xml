@@ -9,13 +9,11 @@
     You can also add your credentials to an existing key, using this line:
     90:3A:2D:35:43:14:DE:6F:9B:87:E0:B3:5A:2A:56:88:8D:4F:AE:16;com.example.mashfique.mapdemo
 
-    ** Key: AIzaSyD5se5yqODu6Ki3tP8BSk6Dhf6QPkAkImI **
-
     Alternatively, follow the directions here:
     https://developers.google.com/maps/documentation/android/start#get-key
 
     Once you have your key (it starts with "AIza"), replace the "google_maps_key"
     string in this file.
     -->
-    <string name="AIzaSyD5se5yqODu6Ki3tP8BSk6Dhf6QPkAkImI" templateMergeStrategy="preserve" translatable="false">YOUR_KEY_HERE</string>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false"> AIzaSyAX-jm-cXY0pCJJRMac1jV66fWExgZTzqk </string>
 </resources>

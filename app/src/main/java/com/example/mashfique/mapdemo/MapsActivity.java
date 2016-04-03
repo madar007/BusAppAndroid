@@ -3,10 +3,13 @@ package com.example.mashfique.mapdemo;
 import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
@@ -50,7 +53,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
 
-    String xml ="<?xml version=\"1.0\" encoding=\"utf-8\" ?> \n" +
+    /* String xml ="<?xml version=\"1.0\" encoding=\"utf-8\" ?> \n" +
             "<body copyright=\"All data copyright University of Minnesota 2016.\">\n" +
             "<route tag=\"4thst\" title=\"4th Street Circulator\" shortTitle=\"4th Street\" color=\"542614\" oppositeColor=\"ffffff\" latMin=\"44.9705642\" latMax=\"44.981076\" lonMin=\"-93.2458978\" lonMax=\"-93.226732\">\n" +
             "<stop tag=\"19thrive\" title=\"19th Avenue Ramp (Southbound)\" shortTitle=\"19th Ramp (Southbound)\" lat=\"44.9705642\" lon=\"-93.2456879\" stopId=\"41\"/>\n" +
@@ -263,7 +266,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             "<point lat=\"44.981076\" lon=\"-93.2426629\"/>\n" +
             "</path>\n" +
             "</route>\n" +
-            "</body>\n";
+            "</body>\n";*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -293,63 +296,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng busLocation = new LatLng(44.975312, -93.226732);     // positioned at Oak St.
         LatLng loc = new LatLng(44.97233, -93.2437);
         Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(loc).title("This is a bus")
-                        .anchor((float) 0.5, (float) 0.5)
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
+                .position(loc).title("This is a bus")
+                .anchor((float) 0.5, (float) 0.5)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
         animateMarker(marker, loc, false);          // will go here
         //rotateMarker(marker,(float)90, mMap);
 
-        // ************************* Parse route and corresponding stops from xml
-        try {
-            SAXParserFactory factory = SAXParserFactory.newInstance();
-            SAXParser saxParser = factory.newSAXParser();
-            XMLParser xmlhandler = new XMLParser();
-            saxParser.parse(new InputSource(new StringReader(xml)), xmlhandler);
-
-            setupRouteAndStops(xmlhandler);         // This will set up map with route paths and stops
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        FetchBusInformationTask fetchBusInfo = new FetchBusInformationTask();
+        fetchBusInfo.execute("routeConfig", "umn-twin", "4thst");
     }
-
-    /* This function will setup route and corresponding stops for a specific route */
-    private void setupRouteAndStops(XMLParser xmlhandler) {
-        //  *********************** Drawing polylines:
-        ArrayList<ArrayList<LatLng>> routeData = xmlhandler.getRouteData();
-        PolylineOptions polylineOptions = new PolylineOptions();
-
-        for (ArrayList<LatLng> array: routeData) {
-            polylineOptions.color(Color.RED);
-            polylineOptions.width(6);
-            polylineOptions.geodesic(false);
-            for (LatLng coord: array) {
-                polylineOptions.add(coord);
-            }
-            mMap.addPolyline(polylineOptions);
-            polylineOptions = new PolylineOptions();
-        }
-
-        // *********************** Drawing stops:
-        ArrayList<BusStop> stopsArray = xmlhandler.getStopsArray();
-        for (BusStop stop: stopsArray) {
-            String tag = stop.getTag();
-            String title = stop.getTitle();
-            String shortTitle;
-            if ((shortTitle = stop.getShortTitle()) == null) { shortTitle = title; }    // Some stops don't have a short-title
-            double latS = stop.getLat();
-            double lonS = stop.getLon();
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(latS, lonS)).title(shortTitle)
-                    .anchor((float) 0.5, (float) 0.5)
-                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
-        }
-
-        //  *********************** Take care of setting bounds :
-        LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
-    }
-
 
     public void animateMarker(final Marker marker, final LatLng toPosition,
                               final boolean hideMarker) {
@@ -388,7 +343,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    static public void rotateMarker(final Marker marker, final float toRotation, GoogleMap map) {
+    public void rotateMarker(final Marker marker, final float toRotation, GoogleMap map) {
         final Handler handler = new Handler();
         final long start = SystemClock.uptimeMillis();
         final float startRotation = marker.getRotation();
@@ -413,5 +368,138 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
+    public class FetchBusInformationTask extends AsyncTask<String, Void, String> {
 
+        private final String LOG_TAG = FetchBusInformationTask.class.getSimpleName();
+
+        /*
+            params[0] - command
+            params[1] - agency
+            params[2] - route
+         */
+        @Override
+        protected String doInBackground(String... params) {
+            final int NUM_QUERY_PARAMS = 3;
+
+            if (params.length != NUM_QUERY_PARAMS) {
+                return null;
+            }
+
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+
+            String busInfoXmlStr = null;
+
+            try {
+                final String NEXTBUS_BASE_URL = "http://webservices.nextbus.com/service/publicXMLFeed?";
+                final String COMMAND_PARAM = "command";
+                final String AGENCY_PARAM = "a";
+                final String ROUTE_PARAM = "r";
+
+                Uri builtUri = Uri.parse(NEXTBUS_BASE_URL).buildUpon()
+                        .appendQueryParameter(COMMAND_PARAM, params[0])
+                        .appendQueryParameter(AGENCY_PARAM, params[1])
+                        .appendQueryParameter(ROUTE_PARAM, params[2])
+                        .build();
+
+                URL url = new URL(builtUri.toString());
+                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String currentLine;
+                while ((currentLine = reader.readLine()) != null) {
+                    buffer.append(currentLine + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    return null;
+                }
+                busInfoXmlStr = buffer.toString();
+                Log.v(LOG_TAG, "Bus info XML String: " + busInfoXmlStr);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Error connecting to NextBus API", e);
+                return null;
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+            }
+            return busInfoXmlStr;
+        }
+
+        @Override
+        protected void onPostExecute(String xmlString) {
+            if (xmlString != null) {
+                // ************************* Parse route and corresponding stops from xml
+                try {
+                    SAXParserFactory factory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = factory.newSAXParser();
+                    XMLParser xmlhandler = new XMLParser();
+                    saxParser.parse(new InputSource(new StringReader(xmlString)), xmlhandler);
+
+                    setupRouteAndStops(xmlhandler);         // This will set up map with route paths and stops
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        /* This function will setup route and corresponding stops for a specific route */
+        private void setupRouteAndStops(XMLParser xmlhandler) {
+            //  *********************** Drawing polylines:
+            ArrayList<ArrayList<LatLng>> routeData = xmlhandler.getRouteData();
+            PolylineOptions polylineOptions = new PolylineOptions();
+
+            for (ArrayList<LatLng> array: routeData) {
+                polylineOptions.color(Color.RED);
+                polylineOptions.width(6);
+                polylineOptions.geodesic(false);
+                for (LatLng coord: array) {
+                    polylineOptions.add(coord);
+                }
+                mMap.addPolyline(polylineOptions);
+                polylineOptions = new PolylineOptions();
+            }
+
+            // *********************** Drawing stops:
+            ArrayList<BusStop> stopsArray = xmlhandler.getStopsArray();
+            for (BusStop stop: stopsArray) {
+                String tag = stop.getTag();
+                String title = stop.getTitle();
+                String shortTitle;
+                if ((shortTitle = stop.getShortTitle()) == null) { shortTitle = title; }    // Some stops don't have a short-title
+                double latS = stop.getLat();
+                double lonS = stop.getLon();
+                mMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(latS, lonS)).title(shortTitle)
+                        .anchor((float) 0.5, (float) 0.5)
+                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
+            }
+
+            //  *********************** Take care of setting bounds :
+            LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
+            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
+        }
+
+    }
 }
+
+

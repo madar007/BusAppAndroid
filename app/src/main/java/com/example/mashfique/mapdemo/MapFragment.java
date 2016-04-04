@@ -1,30 +1,29 @@
 package com.example.mashfique.mapdemo;
-
-import android.app.SearchManager;
-import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.SearchView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -46,73 +45,98 @@ import java.util.ArrayList;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class MapFragment extends Fragment implements OnMapReadyCallback {
 
-    private GoogleMap mMap;
-    private DrawerLayout mDrawerLayout;
-    private ListView mDrawerList;
-    private ArrayAdapter<String> mDrawerAdapter;
+    private MapView mMapView;
+    private GoogleMap mGoogleMap;
+
+    public MapFragment() {
+        // Required empty public constructor
+    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
+    }
 
-//        mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.options_menu, menu);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
 
-        SearchManager searchManager =
-                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView =
-                (SearchView) menu.findItem(R.id.search).getActionView();
-        searchView.setSearchableInfo(
-                searchManager.getSearchableInfo(getComponentName()));
-        return true;
+        View rootView = inflater.inflate(R.layout.activity_main, container, false);
+        mMapView = (MapView) rootView.findViewById(R.id.mapView);
+        mMapView.onCreate(savedInstanceState);
+
+        mMapView.onResume();
+
+        try {
+            MapsInitializer.initialize(getActivity().getApplicationContext());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        mMapView.getMapAsync(this);
+
+
+        return rootView;
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        mMapView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mMapView.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mMapView.onDestroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mMapView.onLowMemory();
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+        mGoogleMap = googleMap;
 
         // ************************** Moving a bus marker
         LatLng busLocation = new LatLng(44.975312, -93.226732);     // positioned at Oak St.
         LatLng loc = new LatLng(44.97233, -93.2437);
-        Marker marker = mMap.addMarker(new MarkerOptions()
-                .position(busLocation).title("This is a bus")
+        Marker marker = mGoogleMap.addMarker(new MarkerOptions()
+                .position(loc).title("This is a bus")
                 .anchor((float) 0.5, (float) 0.5)
                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
-        //animateMarker(marker, loc, false);          // will go here
+        animateMarker(marker, loc, false);          // will go here
         //rotateMarker(marker,(float)90, mMap);
 
         FetchBusInformationTask fetchBusInfo = new FetchBusInformationTask();
         fetchBusInfo.execute("routeConfig", "umn-twin", "4thst");
+
     }
 
     public void animateMarker(final Marker marker, final LatLng toPosition,
                               final boolean hideMarker) {
         final Handler handler = new Handler();
         final long start = SystemClock.uptimeMillis();
-        Projection proj = mMap.getProjection();
+        Projection proj = mGoogleMap.getProjection();
         Point startPoint = proj.toScreenLocation(marker.getPosition());
         final LatLng startLatLng = proj.fromScreenLocation(startPoint);
         final long duration = 500;
@@ -277,7 +301,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 for (LatLng coord: array) {
                     polylineOptions.add(coord);
                 }
-                mMap.addPolyline(polylineOptions);
+                mGoogleMap.addPolyline(polylineOptions);
                 polylineOptions = new PolylineOptions();
             }
 
@@ -290,7 +314,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if ((shortTitle = stop.getShortTitle()) == null) { shortTitle = title; }    // Some stops don't have a short-title
                 double latS = stop.getLat();
                 double lonS = stop.getLon();
-                mMap.addMarker(new MarkerOptions()
+                mGoogleMap.addMarker(new MarkerOptions()
                         .position(new LatLng(latS, lonS)).title(shortTitle)
                         .anchor((float) 0.5, (float) 0.5)
                         .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
@@ -298,10 +322,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             //  *********************** Take care of setting bounds :
             LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
-            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
+            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
         }
 
     }
 }
-
-

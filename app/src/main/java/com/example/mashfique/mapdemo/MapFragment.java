@@ -318,7 +318,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             // *********************** Drawing stops:
             ArrayList<BusStop> stopsArray = xmlhandler.getStopsArray();
-            for (BusStop stop: stopsArray) {
+            for (BusStop stop : stopsArray) {
                 String tag = stop.getTag();
                 String title = stop.getTitle();
                 String shortTitle;

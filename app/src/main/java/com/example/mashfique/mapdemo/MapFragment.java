@@ -117,19 +117,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
 
-        // ************************** Moving a bus marker
-        LatLng busLocation = new LatLng(44.975312, -93.226732);     // positioned at Oak St.
-        LatLng loc = new LatLng(44.97233, -93.2437);
-        Marker marker = mGoogleMap.addMarker(new MarkerOptions()
-                .position(loc).title("This is a bus")
+        // ************************** Fake Buses:
+        Marker bus1 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.976543, -93.2263679)).title("This is bus1")
                 .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 305.0)
                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
-        animateMarker(marker, loc, false);          // will go here
+
+        Marker bus2 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.975195, -93.245857)).title("This is bus2")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 180.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
+
+        Marker bus3 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.971342, -93.247091)).title("This is bus3")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 70.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
+
+        //animateMarker(marker, loc, false);
         //rotateMarker(marker,(float)90, mMap);
 
         FetchBusInformationTask fetchBusInfo = new FetchBusInformationTask();
         fetchBusInfo.execute("routeConfig", "umn-twin", "4thst");
-
     }
 
     public void animateMarker(final Marker marker, final LatLng toPosition,
@@ -296,7 +307,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             for (ArrayList<LatLng> array: routeData) {
                 polylineOptions.color(Color.RED);
-                polylineOptions.width(6);
+                polylineOptions.width(10);
                 polylineOptions.geodesic(false);
                 for (LatLng coord: array) {
                     polylineOptions.add(coord);
@@ -307,7 +318,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             // *********************** Drawing stops:
             ArrayList<BusStop> stopsArray = xmlhandler.getStopsArray();
-            for (BusStop stop: stopsArray) {
+            for (BusStop stop : stopsArray) {
                 String tag = stop.getTag();
                 String title = stop.getTitle();
                 String shortTitle;
@@ -317,6 +328,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 mGoogleMap.addMarker(new MarkerOptions()
                         .position(new LatLng(latS, lonS)).title(shortTitle)
                         .anchor((float) 0.5, (float) 0.5)
+                        .snippet("3, 8, 15 (Minutes)")
                         .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
             }
 

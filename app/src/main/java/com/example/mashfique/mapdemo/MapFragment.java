@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -52,6 +53,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private MapView mMapView;
     private GoogleMap mGoogleMap;
+    private TabLayout mTabLayout;
 
     public MapFragment() {
         // Required empty public constructor
@@ -59,7 +61,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        setUpTabs();
         super.onCreate(savedInstanceState);
+    }
+
+    private void setUpTabs() {
+        mTabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
+        mTabLayout.addTab(mTabLayout.newTab().setText("4th St."));
+        mTabLayout.addTab(mTabLayout.newTab().setText("University"));
+        mTabLayout.addTab(mTabLayout.newTab().setText("Stadium"));
+        mTabLayout.addTab(mTabLayout.newTab().setText("St. Paul"));
     }
 
     @Override

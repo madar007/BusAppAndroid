@@ -27,8 +27,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
-    private ListView mDrawerList;
-    private ArrayAdapter<String>mDrawerAdapter;
+    private NavigationView mDrawerNav;
+//    private ListView mDrawerList;
+//    private ArrayAdapter<String>mDrawerAdapter;
 
     private Toolbar toolbar;
     private FloatingActionButton fab;
@@ -56,31 +57,53 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initDrawer() {
-        final String[] features = {"Alarms", "Favorites", "Offline Maps", "Timetables", "Playground"};
+        //final String[] features = {"Alarms", "Favorites", "Offline Maps", "Timetables", "Playground"};
 
-        mDrawerAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, features);
+        //mDrawerAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, features);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerList = (ListView) findViewById(R.id.listview_drawer);
-        mDrawerList.setAdapter(mDrawerAdapter);
+        mDrawerNav = (NavigationView) findViewById(R.id.nav_view_main);
+        mDrawerNav.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem item) {
+                int navItem = item.getItemId();
 
-        mDrawerList.setOnItemClickListener(
-                new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        if (position == 0) {
-                            Intent alarmsIntent = new Intent(getApplicationContext(), AlarmsActivity.class);
-                            startActivity(alarmsIntent);
-                        } else if (position == 4) {
-                            Intent playgroundIntent = new Intent(getApplicationContext(), UIPlayground.class);
-                            startActivity(playgroundIntent);
-                        } else {
-                            String selectedFeature = mDrawerAdapter.getItem(position);
-                            Toast sampleToast = Toast.makeText(getApplicationContext(), selectedFeature, Toast.LENGTH_SHORT);
-                            sampleToast.show();
-                        }
-                    }
+                switch (navItem) {
+                    case R.id.nav_alarms:
+                        Intent alarmsIntent = new Intent(getApplicationContext(), AlarmsActivity.class);
+                        startActivity(alarmsIntent);
+                        break;
+                    case R.id.nav_favorites:
+                    case R.id.nav_offline_maps:
+                    case R.id.nav_timetables:
+                    case R.id.nav_settings:
+                    case R.id.nav_help_feedback:
+                    default:
+                        break;
                 }
-        );
+                return true;
+            }
+        });
+//        mDrawerList = (ListView) findViewById(R.id.listview_drawer);
+//        mDrawerList.setAdapter(mDrawerAdapter);
+//
+//        mDrawerList.setOnItemClickListener(
+//                new AdapterView.OnItemClickListener() {
+//                    @Override
+//                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                        if (position == 0) {
+//                            Intent alarmsIntent = new Intent(getApplicationContext(), AlarmsActivity.class);
+//                            startActivity(alarmsIntent);
+//                        } else if (position == 4) {
+//                            Intent playgroundIntent = new Intent(getApplicationContext(), UIPlayground.class);
+//                            startActivity(playgroundIntent);
+//                        } else {
+//                            String selectedFeature = mDrawerAdapter.getItem(position);
+//                            Toast sampleToast = Toast.makeText(getApplicationContext(), selectedFeature, Toast.LENGTH_SHORT);
+//                            sampleToast.show();
+//                        }
+//                    }
+//                }
+//        );
     }
 
     private void initFab() {
@@ -93,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -110,9 +134,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        switch(item.getItemId()) {
+        switch (item.getItemId()) {
             case android.R.id.home:
-                mDrawerLayout.openDrawer(GravityCompat.START);
+             //   mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
         }
 

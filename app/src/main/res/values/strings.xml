@@ -16,5 +16,6 @@
     <string name="title_activity_alarms">AlarmsActivity</string>
     <string name="title_activity_tab_test">tabTest</string>
     <string name="section_format">Hello World from section: %1$d</string>
+    <string name="title_activity_drawer_playground">DrawerPlayground</string>
 
 </resources>

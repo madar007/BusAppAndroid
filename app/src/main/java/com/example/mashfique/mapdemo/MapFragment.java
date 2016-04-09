@@ -8,8 +8,6 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -338,7 +336,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     XMLParser xmlhandler = new XMLParser();
                     saxParser.parse(new InputSource(new StringReader(xmlString)), xmlhandler);
 
-                    setupRouteAndStops(xmlhandler);         // This will set up map with route paths and stops
+                    mGoogleMap.clear();
+                    setupRoute(xmlhandler);
+                    setupStops(xmlhandler);
+                    //  *********************** Take care of setting bounds :
+                    LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
+                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -347,11 +350,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
 
         /* This function will setup route and corresponding stops for a specific route */
-        private void setupRouteAndStops(XMLParser xmlhandler) {
+        private void setupRoute(XMLParser xmlhandler) {
             //  *********************** Drawing polylines:
             ArrayList<ArrayList<LatLng>> routeData = xmlhandler.getRouteData();
             PolylineOptions polylineOptions = new PolylineOptions();
-            clearDrawnLines();
 
             for (ArrayList<LatLng> array: routeData) {
                 polylineOptions.color(Color.RED);
@@ -361,36 +363,26 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     polylineOptions.add(coord);
                 }
 
-                drawnPolyLines.add(mGoogleMap.addPolyline(polylineOptions));
+                mGoogleMap.addPolyline(polylineOptions);
                 polylineOptions = new PolylineOptions();
             }
-
-            // *********************** Drawing stops:
-//            ArrayList<BusStop> stopsArray = xmlhandler.getStopsArray();
-//            for (BusStop stop : stopsArray) {
-//                String tag = stop.getTag();
-//                String title = stop.getTitle();
-//                String shortTitle;
-//                if ((shortTitle = stop.getShortTitle()) == null) { shortTitle = title; }    // Some stops don't have a short-title
-//                double latS = stop.getLat();
-//                double lonS = stop.getLon();
-//                mGoogleMap.addMarker(new MarkerOptions()
-//                        .position(new LatLng(latS, lonS)).title(shortTitle)
-//                        .anchor((float) 0.5, (float) 0.5)
-//                        .snippet("3, 8, 15 (Minutes)")
-//                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
-//            }
-
-            //  *********************** Take care of setting bounds :
-            LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
-            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
         }
 
-        private void clearDrawnLines() {
-            for (Polyline line: drawnPolyLines) {
-                line.remove();
+        private void setupStops(XMLParser xmlhandler) {
+            ArrayList<BusStop> stopsArray = xmlhandler.getStopsArray();
+            for (BusStop stop : stopsArray) {
+                String tag = stop.getTag();
+                String title = stop.getTitle();
+                String shortTitle;
+                if ((shortTitle = stop.getShortTitle()) == null) { shortTitle = title; }    // Some stops don't have a short-title
+                double latS = stop.getLat();
+                double lonS = stop.getLon();
+                mGoogleMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(latS, lonS)).title(shortTitle)
+                        .anchor((float) 0.5, (float) 0.5)
+                        .snippet("3, 8, 15 (Minutes)")
+                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
             }
-            drawnPolyLines.clear();
         }
 
     }

@@ -6,22 +6,21 @@
         android:checkableBehavior="single">
         <item
             android:id="@+id/nav_alarms"
+            android:icon="@drawable/ic_access_alarms_black_24dp"
             android:title="Alarms" />
-        <!--android:icon="@drawable/ic_menu_camera"-->
         <item
             android:id="@+id/nav_favorites"
+            android:icon="@drawable/ic_favorite_black_24dp"
             android:title="Favorites" />
-
-        <!--android:icon="@drawable/ic_menu_gallery"-->
         <item
             android:id="@+id/nav_offline_maps"
+            android:icon="@drawable/ic_map_black_24dp"
             android:title="Offline Maps" />
-        <!--android:icon="@drawable/ic_menu_slideshow"-->
 
         <item
             android:id="@+id/nav_timetables"
+            android:icon="@drawable/ic_directions_bus_black_24dp"
             android:title="Timetables" />
-        <!--android:icon="@drawable/ic_menu_manage"-->
     </group>
 
     <group
@@ -29,13 +28,12 @@
         android:checkableBehavior="single">
         <item
             android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_settings_black_24dp"
             android:title="Settings" />
-        <!--android:icon="@drawable/ic_menu_share"-->
         <item
             android:id="@+id/nav_help_feedback"
+            android:icon="@drawable/ic_info_black_24dp"
             android:title="Help and Feedback" />
-        <!--android:icon="@drawable/ic_menu_send"-->
-
     </group>
 
 </menu>

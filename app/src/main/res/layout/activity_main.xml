@@ -48,12 +48,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <!--<include-->
-        <!--layout="@layout/toolbar"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content" />-->
-
-
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/fab"
             android:layout_width="wrap_content"
@@ -62,16 +56,6 @@
             android:layout_margin="@dimen/fab_margin"
             android:src="@android:drawable/ic_dialog_email" />
     </FrameLayout>
-
-    <!--<ListView-->
-    <!--android:id="@+id/listview_drawer"-->
-    <!--android:layout_width="240dp"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:layout_gravity="start"-->
-    <!--android:background="@android:color/white"-->
-    <!--android:choiceMode="singleChoice"-->
-    <!--android:divider="@android:color/transparent"-->
-    <!--android:dividerHeight="1dp" />-->
 
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view_main"
@@ -82,8 +66,8 @@
         android:divider="@android:color/darker_gray"
         android:dividerHeight="1dp"
         android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header_drawer_playground"
-        app:menu="@menu/activity_drawer_playground_drawer" />
+        app:headerLayout="@layout/nav_drawer_header"
+        app:menu="@menu/menu_nav_drawer" />
 
 
 </android.support.v4.widget.DrawerLayout>

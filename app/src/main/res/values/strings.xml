@@ -11,11 +11,7 @@
     <string name="title_activity_main">MainActivity</string>
 
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_test">Test</string>
     <string name="title_activity_alarms">AlarmsActivity</string>
-    <string name="title_activity_tab_test">tabTest</string>
-    <string name="section_format">Hello World from section: %1$d</string>
-    <string name="title_activity_drawer_playground">DrawerPlayground</string>
+    <string name="hello_blank_fragment">Test for fab</string>
 
 </resources>

@@ -27,12 +27,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
-    private ListView mDrawerList;
-    private ArrayAdapter<String>mDrawerAdapter;
+    private NavigationView mDrawerNav;
 
     private Toolbar toolbar;
     private FloatingActionButton fab;
-    protected static FragmentManager fragmentManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initToolbar() {
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -56,28 +54,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initDrawer() {
-        final String[] features = {"Alarms", "Favorites", "Offline Maps", "Timetables"};
-
-        mDrawerAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, features);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerList = (ListView) findViewById(R.id.listview_drawer);
-        mDrawerList.setAdapter(mDrawerAdapter);
+        mDrawerNav = (NavigationView) findViewById(R.id.nav_view_main);
+        mDrawerNav.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem item) {
+                int navItem = item.getItemId();
 
-        mDrawerList.setOnItemClickListener(
-                new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        if (position == 0) {
-                            Intent alarmsIntent = new Intent(getApplicationContext(), AlarmsActivity.class);
-                            startActivity(alarmsIntent);
-                        } else {
-                            String selectedFeature = mDrawerAdapter.getItem(position);
-                            Toast sampleToast = Toast.makeText(getApplicationContext(), selectedFeature, Toast.LENGTH_SHORT);
-                            sampleToast.show();
-                        }
-                    }
+                switch (navItem) {
+                    case R.id.nav_alarms:
+                        Intent alarmsIntent = new Intent(getApplicationContext(), AlarmsActivity.class);
+                        startActivity(alarmsIntent);
+                        break;
+                    case R.id.nav_favorites:
+                    case R.id.nav_offline_maps:
+                    case R.id.nav_timetables:
+                    case R.id.nav_settings:
+                    case R.id.nav_help_feedback:
+                    default:
+                        String selectedFeature = item.getTitle().toString();
+                        Toast sampleToast = Toast.makeText(getApplicationContext(), selectedFeature, Toast.LENGTH_SHORT);
+                        sampleToast.show();
+                        break;
                 }
-        );
+                return true;
+            }
+        });
     }
 
     private void initFab() {
@@ -90,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -106,8 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
-        switch(item.getItemId()) {
+        switch (item.getItemId()) {
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;

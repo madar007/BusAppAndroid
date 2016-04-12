@@ -141,19 +141,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                 .position(new LatLng(44.976543, -93.2263679)).title("This is bus1")
                 .anchor((float) 0.5, (float) 0.5)
                 .rotation((float) 305.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
 
         Marker bus2 = mGoogleMap.addMarker(new MarkerOptions()
                 .position(new LatLng(44.975195, -93.245857)).title("This is bus2")
                 .anchor((float) 0.5, (float) 0.5)
                 .rotation((float) 180.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
 
         Marker bus3 = mGoogleMap.addMarker(new MarkerOptions()
                 .position(new LatLng(44.971342, -93.247091)).title("This is bus3")
                 .anchor((float) 0.5, (float) 0.5)
                 .rotation((float) 70.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
     }
 
     @Override

@@ -126,6 +126,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
                 stopAnimation();
+
             }
 
             @Override

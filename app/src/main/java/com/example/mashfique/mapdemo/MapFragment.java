@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -29,6 +30,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.xml.sax.InputSource;
@@ -41,6 +43,7 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -51,7 +54,9 @@ import javax.xml.parsers.SAXParserFactory;
 public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private MapView mMapView;
-    private GoogleMap mGoogleMap;
+    private static GoogleMap mGoogleMap;
+    private TabLayout mTabLayout;
+
 
     public MapFragment() {
         // Required empty public constructor
@@ -59,7 +64,48 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        setUpTabs();
         super.onCreate(savedInstanceState);
+    }
+
+    private void setUpTabs() {
+        mTabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
+        mTabLayout.addTab(mTabLayout.newTab().setText("4th St."));
+        mTabLayout.addTab(mTabLayout.newTab().setText("University"));
+        mTabLayout.addTab(mTabLayout.newTab().setText("Stadium"));
+        mTabLayout.addTab(mTabLayout.newTab().setText("St. Paul"));
+        mTabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int tabPos = tab.getPosition();
+                switch(tabPos) {
+                    case 0:
+                        new FetchBusInformationTask().execute("routeConfig", "umn-twin", "4thst");
+                        break;
+                    case 1:
+                        new FetchBusInformationTask().execute("routeConfig", "umn-twin", "university");
+                        break;
+                    case 2:
+                        new FetchBusInformationTask().execute("routeConfig", "umn-twin", "stadium");
+                        break;
+                    case 3:
+                        new FetchBusInformationTask().execute("routeConfig", "umn-twin", "stpaul");
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
     }
 
     @Override
@@ -205,9 +251,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         });
     }
 
-    public class FetchBusInformationTask extends AsyncTask<String, Void, String> {
+    public static class FetchBusInformationTask extends AsyncTask<String, Void, String> {
 
         private final String LOG_TAG = FetchBusInformationTask.class.getSimpleName();
+        private static List<Polyline> drawnPolyLines = new ArrayList<>();
 
         /*
             params[0] - command
@@ -262,7 +309,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     return null;
                 }
                 busInfoXmlStr = buffer.toString();
-                Log.v(LOG_TAG, "Bus info XML String: " + busInfoXmlStr);
+                //Log.v(LOG_TAG, "Bus info XML String: " + busInfoXmlStr);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error connecting to NextBus API", e);
                 return null;
@@ -304,6 +351,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             //  *********************** Drawing polylines:
             ArrayList<ArrayList<LatLng>> routeData = xmlhandler.getRouteData();
             PolylineOptions polylineOptions = new PolylineOptions();
+            clearDrawnLines();
 
             for (ArrayList<LatLng> array: routeData) {
                 polylineOptions.color(Color.RED);
@@ -312,29 +360,37 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 for (LatLng coord: array) {
                     polylineOptions.add(coord);
                 }
-                mGoogleMap.addPolyline(polylineOptions);
+
+                drawnPolyLines.add(mGoogleMap.addPolyline(polylineOptions));
                 polylineOptions = new PolylineOptions();
             }
 
             // *********************** Drawing stops:
-            ArrayList<BusStop> stopsArray = xmlhandler.getStopsArray();
-            for (BusStop stop : stopsArray) {
-                String tag = stop.getTag();
-                String title = stop.getTitle();
-                String shortTitle;
-                if ((shortTitle = stop.getShortTitle()) == null) { shortTitle = title; }    // Some stops don't have a short-title
-                double latS = stop.getLat();
-                double lonS = stop.getLon();
-                mGoogleMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(latS, lonS)).title(shortTitle)
-                        .anchor((float) 0.5, (float) 0.5)
-                        .snippet("3, 8, 15 (Minutes)")
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
-            }
+//            ArrayList<BusStop> stopsArray = xmlhandler.getStopsArray();
+//            for (BusStop stop : stopsArray) {
+//                String tag = stop.getTag();
+//                String title = stop.getTitle();
+//                String shortTitle;
+//                if ((shortTitle = stop.getShortTitle()) == null) { shortTitle = title; }    // Some stops don't have a short-title
+//                double latS = stop.getLat();
+//                double lonS = stop.getLon();
+//                mGoogleMap.addMarker(new MarkerOptions()
+//                        .position(new LatLng(latS, lonS)).title(shortTitle)
+//                        .anchor((float) 0.5, (float) 0.5)
+//                        .snippet("3, 8, 15 (Minutes)")
+//                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
+//            }
 
             //  *********************** Take care of setting bounds :
             LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
+        }
+
+        private void clearDrawnLines() {
+            for (Polyline line: drawnPolyLines) {
+                line.remove();
+            }
+            drawnPolyLines.clear();
         }
 
     }

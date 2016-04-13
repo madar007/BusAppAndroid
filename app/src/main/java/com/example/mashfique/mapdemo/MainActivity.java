@@ -18,17 +18,27 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.google.android.gms.maps.SupportMapFragment;
+
+import static android.view.View.GONE;
 
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
+    private SlidingUpPanelLayout slidingLayout;
     private ListView mDrawerList;
+    private ListView sliderList;
     private ArrayAdapter<String>mDrawerAdapter;
+    private ArrayAdapter<String>sliderAdapter;
+    private TextView textView;
 
     private Toolbar toolbar;
     private FloatingActionButton fab;
@@ -45,10 +55,24 @@ public class MainActivity extends AppCompatActivity {
         initToolbar();
         initDrawer();
         initFab();
+        initSlideUp();
+        textView = (TextView) findViewById(R.id.text);
+    }
+
+    private void initSlideUp(){
+        final String[] features = {"6 min (0.7 mi)", "Head right onto SE Huron Blvd",
+                "Turn left onto Washington Ave SE", "Turn right onto Walnut St SE",
+                "Turn left onto Beacon St SE", "Turn left onto Union St SE",
+                "Arrived at Kenneth H. Keller Hall"};
+        //set layout slide listener
+        slidingLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+       /* sliderAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, features);
+        sliderList = (ListView) findViewById(R.id.listView);
+        sliderList.setAdapter(sliderAdapter);*/
     }
 
     private void initToolbar() {
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -56,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initDrawer() {
-        final String[] features = {"Alarms", "Favorites", "Offline Maps", "Timetables"};
+        final String[] features = {"Alarms", "Favorites", "Offline Maps", "Timetables", "Playground"};
 
         mDrawerAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, features);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -70,6 +94,9 @@ public class MainActivity extends AppCompatActivity {
                         if (position == 0) {
                             Intent alarmsIntent = new Intent(getApplicationContext(), AlarmsActivity.class);
                             startActivity(alarmsIntent);
+                        } else if (position == 4) {
+                            Intent playgroundIntent = new Intent(getApplicationContext(), UIPlayground.class);
+                            startActivity(playgroundIntent);
                         } else {
                             String selectedFeature = mDrawerAdapter.getItem(position);
                             Toast sampleToast = Toast.makeText(getApplicationContext(), selectedFeature, Toast.LENGTH_SHORT);
@@ -90,6 +117,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();

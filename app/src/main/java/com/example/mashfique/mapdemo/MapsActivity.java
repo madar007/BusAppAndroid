@@ -1,19 +1,24 @@
 package com.example.mashfique.mapdemo;
 
+import android.app.FragmentTransaction;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.ArrayAdapter;
@@ -30,19 +35,30 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -57,13 +73,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
-//        mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        setUpNavigationTabs();
 
     }
 
@@ -94,18 +108,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        // TODO: remove this temp marker
+
+        mMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.975312, -93.226732))
+                .title("Hello world"));
+
+        LatLng pos = new LatLng(44.975312, -93.226732);
+        Marker melbourne = mMap.addMarker(new MarkerOptions()
+                .position(pos)
+                .icon(BitmapDescriptorFactory.defaultMarker()));
+
         // ************************** Moving a bus marker
         LatLng busLocation = new LatLng(44.975312, -93.226732);     // positioned at Oak St.
         LatLng loc = new LatLng(44.97233, -93.2437);
         Marker marker = mMap.addMarker(new MarkerOptions()
-                .position(busLocation).title("This is a bus")
+                .position(loc).title("This is a bus")
                 .anchor((float) 0.5, (float) 0.5)
                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker)));
-        //animateMarker(marker, loc, false);          // will go here
+        animateMarker(marker, loc, false);          // will go here
         //rotateMarker(marker,(float)90, mMap);
 
         FetchBusInformationTask fetchBusInfo = new FetchBusInformationTask();
         fetchBusInfo.execute("routeConfig", "umn-twin", "4thst");
+
     }
 
     public void animateMarker(final Marker marker, final LatLng toPosition,
@@ -169,6 +195,36 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
     }
+
+    private void setUpNavigationTabs() {
+        final ActionBar actionBar = getSupportActionBar();
+
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        ActionBar.TabListener tabListener = new ActionBar.TabListener() {
+            @Override
+            public void onTabSelected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction ft) {
+
+            }
+
+            @Override
+            public void onTabUnselected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction ft) {
+
+            }
+
+            @Override
+            public void onTabReselected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction ft) {
+
+            }
+        };
+
+        for (int i = 0; i < 3; i++) {
+            actionBar.addTab(actionBar.newTab()
+                            .setText("Tab " + (i + 1))
+                            .setTabListener(tabListener));
+        }
+    }
+
 
     public class FetchBusInformationTask extends AsyncTask<String, Void, String> {
 

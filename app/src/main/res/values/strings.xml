@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">MapDemo</string>
     <string name="title_activity_maps">Map</string>
-
     <string name="search_title">mySearch</string>
     <string name="title_activity_navigation_drawer">NavigationDrawer</string>
 
@@ -11,6 +10,20 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_main">MainActivity</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_test">Test</string>
     <string name="title_activity_alarms">AlarmsActivity</string>
+    <string name="title_activity_tab_test">tabTest</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+    <string-array name="sports_array">
+        <item>6 min (0.7 mi)</item>
+        <item>Head right onto SE Huron Blvd</item>
+        <item>Turn left onto Washington Ave SE</item>
+        <item>Turn right onto Walnut St SE</item>
+        <item>Turn left onto Beacon St SE</item>
+        <item>Turn left onto Union St SE</item>
+        <item>Arrived at Kenneth H. Keller Hall</item>
+    </string-array>
+
 </resources>

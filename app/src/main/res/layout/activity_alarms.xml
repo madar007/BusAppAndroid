@@ -19,7 +19,7 @@
             android:theme="@style/AppTheme.AppBarOverlay">
 
             <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
+                android:id="@+id/toolbar_alarm"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="?attr/colorPrimary"
@@ -28,10 +28,10 @@
         </android.support.design.widget.AppBarLayout>
 
         <FrameLayout
-            android:id="@+id/container"
+            android:id="@+id/container_alarm_activity"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:context=".AlarmsActivity"></FrameLayout>
+            tools:context=".AlarmsActivity"/>
 
     </LinearLayout>
 

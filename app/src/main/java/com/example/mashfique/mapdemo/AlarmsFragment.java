@@ -41,16 +41,26 @@ public class AlarmsFragment extends Fragment {
                 mAlarmsAdapter.notifyDataSetChanged();
                 Snackbar.make(view, "Alarm added!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                getActivity().getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.container_alarm_activity, new AddAlarmFragment(), null)
+                        .addToBackStack(null)
+                        .commit();
+                fab.hide();
             }
         });
     }
 
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_alarms, container, false);
-        mAlarmsAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, new ArrayList<String>());
+        if (mAlarmsAdapter == null) {
+            mAlarmsAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, new ArrayList<String>());
+        }
         ListView listView = (ListView) rootView.findViewById(R.id.listview_alarm);
         listView.setAdapter(mAlarmsAdapter);
+        fab.show();
         return rootView;
     }
 

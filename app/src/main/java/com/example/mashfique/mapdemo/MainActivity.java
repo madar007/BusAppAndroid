@@ -18,16 +18,28 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.google.android.gms.maps.SupportMapFragment;
+
+import static android.view.View.GONE;
 
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mDrawerNav;
+    private SlidingUpPanelLayout slidingLayout;
+    private ListView mDrawerList;
+    private ListView sliderList;
+    private ArrayAdapter<String>mDrawerAdapter;
+    private ArrayAdapter<String>sliderAdapter;
+    private TextView textView;
 
     private Toolbar toolbar;
     private FloatingActionButton fab;
@@ -43,6 +55,20 @@ public class MainActivity extends AppCompatActivity {
         initToolbar();
         initDrawer();
         initFab();
+        initSlideUp();
+        textView = (TextView) findViewById(R.id.text);
+    }
+
+    private void initSlideUp(){
+        final String[] features = {"6 min (0.7 mi)", "Head right onto SE Huron Blvd",
+                "Turn left onto Washington Ave SE", "Turn right onto Walnut St SE",
+                "Turn left onto Beacon St SE", "Turn left onto Union St SE",
+                "Arrived at Kenneth H. Keller Hall"};
+        //set layout slide listener
+        slidingLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+       /* sliderAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, features);
+        sliderList = (ListView) findViewById(R.id.listView);
+        sliderList.setAdapter(sliderAdapter);*/
     }
 
     private void initToolbar() {
@@ -76,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast sampleToast = Toast.makeText(getApplicationContext(), selectedFeature, Toast.LENGTH_SHORT);
                         sampleToast.show();
                         break;
+
                 }
                 return true;
             }

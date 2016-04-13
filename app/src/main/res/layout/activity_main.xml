@@ -37,16 +37,36 @@
 
         </android.support.design.widget.AppBarLayout>
 
-        <include
-            layout="@layout/fragment_map"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_horizontal|bottom" />
+        <include layout="@layout/sliding_layout" />
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/listView" />
+
 
         <FrameLayout
             android:id="@+id/content_frame"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
+
+        <!--<include
+            layout="@layout/sliding_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom" />
+        <FrameLayout
+            android:id="@+id/content_sl-ider"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />-->
+
+        <!--<include-->
+        <!--layout="@layout/toolbar"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content" />-->
+
+
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/fab"
@@ -55,6 +75,7 @@
             android:layout_gravity="bottom|end"
             android:layout_margin="@dimen/fab_margin"
             android:src="@android:drawable/ic_dialog_email" />
+
     </FrameLayout>
 
     <android.support.design.widget.NavigationView
@@ -68,6 +89,7 @@
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/nav_drawer_header"
         app:menu="@menu/menu_nav_drawer" />
+
 
 
 </android.support.v4.widget.DrawerLayout>

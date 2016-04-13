@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.xml.sax.InputSource;
@@ -44,6 +45,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.List;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -69,6 +71,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         setUpTabs();
         super.onCreate(savedInstanceState);
     }
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -260,7 +263,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
     private void startAnimation() {
         timerMarkerTask = new TimerTask() {
-
             @Override
             public void run() {
                 handler.post(new Runnable() {
@@ -403,6 +405,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         protected void onPostExecute(String xmlString) {
             delegate.processResults(xmlString);
         }
+
 
     }
 }

@@ -98,6 +98,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     private void setUpTabs() {
         mTabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
         mTabLayout.addTab(mTabLayout.newTab().setText("4th St."));
+        mTabLayout.addTab(mTabLayout.newTab().setText("Connector"));
         mTabLayout.addTab(mTabLayout.newTab().setText("University"));
         mTabLayout.addTab(mTabLayout.newTab().setText("Stadium"));
         mTabLayout.addTab(mTabLayout.newTab().setText("St. Paul"));
@@ -110,12 +111,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                         new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
                         break;
                     case 1:
-                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "university");
+                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "connector");
                         break;
                     case 2:
-                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "stadium");
+                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "university");
                         break;
                     case 3:
+                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "stadium");
+                        break;
+                    case 4:
                         new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "stpaul");
                         break;
                     default:

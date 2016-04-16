@@ -27,7 +27,7 @@ public class FabDialog extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         final String[] fabOptions = {"East Bank", "West Bank", "St. Paul", "Fullscreen"};
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Fab Test")
+        builder.setTitle("Map options")
                 .setItems(fabOptions, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

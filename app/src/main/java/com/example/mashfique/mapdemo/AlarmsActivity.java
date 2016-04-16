@@ -19,6 +19,7 @@ public class AlarmsActivity extends AppCompatActivity {
 
 
         toolbar = (Toolbar) findViewById(R.id.toolbar_alarm);
+        toolbar.setTitle("Alarms");
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }

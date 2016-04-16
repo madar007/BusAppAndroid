@@ -34,20 +34,23 @@
                     android:focusable="true"
                     android:focusableInTouchMode="true">
 
-                    <EditText
+                    <AutoCompleteTextView
+                        android:id="@+id/autocomplete_from_main"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
                         android:layout_marginLeft="@dimen/activity_horizontal_margin"
                         android:layout_marginRight="@dimen/activity_horizontal_margin"
-                        android:textSize="12sp"
+                        android:dropDownSelector="@android:drawable/list_selector_background"
+                        android:textSize="14sp"
                         android:hint="From"/>
 
-                    <EditText
+                    <AutoCompleteTextView
+                        android:id="@+id/autocomplete_to_main"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
                         android:layout_marginLeft="@dimen/activity_horizontal_margin"
                         android:layout_marginRight="@dimen/activity_horizontal_margin"
-                        android:textSize="12sp"
+                        android:textSize="14sp"
                         android:hint="To"/>
                 </LinearLayout>
 

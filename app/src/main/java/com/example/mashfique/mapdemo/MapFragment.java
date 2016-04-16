@@ -9,14 +9,15 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
+import android.widget.AdapterView;
+import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -53,14 +54,18 @@ import javax.xml.parsers.SAXParserFactory;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncResponse_Bus {
+public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncResponse_FetchBusRoute {
 
     private MapView mMapView;
     private static GoogleMap mGoogleMap;
     private TabLayout mTabLayout;
     private Timer timer;
     private TimerTask timerMarkerTask;
-    private final Handler handler = new Handler();
+    private Handler animationHandler;
+    private AutoCompleteTextView fromSearch;
+    private AutoCompleteTextView toSearch;
+    private GooglePlacesAutocompleteAdapter mPlacesAdapter;
+    private Toolbar toolbar;
 
     public MapFragment() {
         // Required empty public constructor
@@ -68,39 +73,69 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        setUpTabs();
+        initTabs();
+        animationHandler = new Handler();
+        toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
         super.onCreate(savedInstanceState);
     }
 
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.activity_main, container, false);
-        mMapView = (MapView) rootView.findViewById(R.id.mapView);
+        initMap(rootView, savedInstanceState);
+        initSearches(rootView);
+        return rootView;
+    }
+
+    private void initMap(View view, Bundle savedInstanceState) {
+        mMapView = (MapView) view.findViewById(R.id.mapView);
         mMapView.onCreate(savedInstanceState);
-
         mMapView.onResume();
-
         try {
             MapsInitializer.initialize(getActivity().getApplicationContext());
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         mMapView.getMapAsync(this);
-        return rootView;
     }
 
-    private void setUpTabs() {
+    private void initSearches(View view) {
+        fromSearch = (AutoCompleteTextView) toolbar.getChildAt(0).findViewById(R.id.autocomplete_from_main);
+        toSearch = (AutoCompleteTextView) toolbar.getChildAt(0).findViewById(R.id.autocomplete_to_main);
+        mPlacesAdapter = new GooglePlacesAutocompleteAdapter(getContext(), R.layout.autocomplete_list_item);
+
+        fromSearch.setAdapter(mPlacesAdapter);
+        fromSearch.setThreshold(2);
+        toSearch.setAdapter(mPlacesAdapter);
+        toSearch.setThreshold(2);
+
+        fromSearch.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String selectedPlace = mPlacesAdapter.getItem(position).toString();
+                selectedPlace = selectedPlace.split("\n")[0];
+                fromSearch.setText(selectedPlace);
+            }
+        });
+
+        toSearch.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String selectedPlace = mPlacesAdapter.getItem(position).toString();
+                selectedPlace = selectedPlace.split("\n")[0];
+                toSearch.setText(selectedPlace);
+            }
+        });
+
+    }
+
+    private void initTabs() {
         mTabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
         mTabLayout.addTab(mTabLayout.newTab().setText("4th St."));
+        mTabLayout.addTab(mTabLayout.newTab().setText("Connector"));
         mTabLayout.addTab(mTabLayout.newTab().setText("University"));
         mTabLayout.addTab(mTabLayout.newTab().setText("Stadium"));
         mTabLayout.addTab(mTabLayout.newTab().setText("St. Paul"));
@@ -110,16 +145,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                 int tabPos = tab.getPosition();
                 switch (tabPos) {
                     case 0:
-                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
+                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
                         break;
                     case 1:
-                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "university");
+                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "connector");
                         break;
                     case 2:
-                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "stadium");
+                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "university");
                         break;
                     case 3:
-                        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "stpaul");
+                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "stadium");
+                        break;
+                    case 4:
+                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "stpaul");
                         break;
                     default:
                         break;
@@ -128,12 +166,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-                stopAnimation();
+                stopAnimationTimer();
+
             }
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-                startTimer();
+                startAnimationTimer();
             }
         });
     }
@@ -165,11 +204,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-        new FetchBusInformationTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
+        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
     }
 
-    public void animateMarker(final Marker marker, final LatLng toPosition,
-                              final boolean hideMarker) {
+    public void animateMarker(final Marker marker, final LatLng toPosition, final boolean hideMarker) {
         final Handler handler = new Handler();
         final long start = SystemClock.uptimeMillis();
         Projection proj = mGoogleMap.getProjection();
@@ -231,9 +269,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     }
 
     @Override
-    public void processResults(String results) {
+    public void processBusRouteResults(String results) {
         if (results != null) {
-
             // ************************* Parse route and corresponding stops from xml
             try {
                 SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -255,7 +292,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         }
     }
 
-    private void startTimer() {
+    private void startAnimationTimer() {
         timer = new Timer();
         startAnimation();
         timer.schedule(timerMarkerTask, 1000, 10000);
@@ -265,7 +302,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         timerMarkerTask = new TimerTask() {
             @Override
             public void run() {
-                handler.post(new Runnable() {
+                animationHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         Toast toast = Toast.makeText(getContext(), "Update markers", Toast.LENGTH_SHORT);
@@ -276,7 +313,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         };
     }
 
-    private void stopAnimation() {
+    private void stopAnimationTimer() {
         if (timer != null) {
             timer.cancel();
             timer = null;
@@ -321,11 +358,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         }
     }
 
-    public static class FetchBusInformationTask extends AsyncTask<String, Void, String> {
-        private final String LOG_TAG = FetchBusInformationTask.class.getSimpleName();
-        public AsyncResponse_Bus delegate = null;
+    public static class FetchBusRouteTask extends AsyncTask<String, Void, String> {
+        private final String LOG_TAG = FetchBusRouteTask.class.getSimpleName();
+        public AsyncResponse_FetchBusRoute delegate = null;
 
-        public FetchBusInformationTask(MapFragment mapFragment) {
+        public FetchBusRouteTask(MapFragment mapFragment) {
             delegate = mapFragment;
         }
 
@@ -403,7 +440,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
         @Override
         protected void onPostExecute(String xmlString) {
-            delegate.processResults(xmlString);
+            delegate.processBusRouteResults(xmlString);
         }
 
 

@@ -50,15 +50,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.mashfique.mapdemo.MainActivity" />
         </activity>
-        <activity
-            android:name=".UIPlayground"
-            android:label="@string/title_activity_tab_test"
-            android:theme="@style/AppTheme"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.mashfique.mapdemo.MainActivity" />
-        </activity>
     </application>
 
 </manifest>

@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mDrawerNav;
-    private SlidingUpPanelLayout slidingLayout;
+    //private SlidingUpPanelLayout slidingLayout;
     private ListView mDrawerList;
     private ListView sliderList;
     private ArrayAdapter<String>mDrawerAdapter;
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         initToolbar();
         initDrawer();
         initFab();
-        initSlideUp();
+        //initSlideUp();
         textView = (TextView) findViewById(R.id.text);
     }
 
@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
                 "Turn left onto Beacon St SE", "Turn left onto Union St SE",
                 "Arrived at Kenneth H. Keller Hall"};
         //set layout slide listener
-        slidingLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        //slidingLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
        /* sliderAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, features);
         sliderList = (ListView) findViewById(R.id.listView);
         sliderList.setAdapter(sliderAdapter);*/

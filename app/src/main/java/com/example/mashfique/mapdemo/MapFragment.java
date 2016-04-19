@@ -1,5 +1,7 @@
 package com.example.mashfique.mapdemo;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.net.Uri;
@@ -9,6 +11,8 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +22,7 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -26,6 +31,8 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -77,6 +84,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         animationHandler = new Handler();
         toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
         super.onCreate(savedInstanceState);
+
     }
 
 
@@ -100,6 +108,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
             e.printStackTrace();
         }
         mMapView.getMapAsync(this);
+
+
     }
 
     private void initSearches(View view) {
@@ -203,8 +213,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+
         mGoogleMap = googleMap;
         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
+
+        if (ContextCompat.checkSelfPermission(mMapView.getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            mGoogleMap.setMyLocationEnabled(true);
+        } else {
+            // Show rationale and request permission.
+        }
+        View btnMyLocation = ((View) mMapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100,100); // size of button in dp
+        //params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+        params.addRule(RelativeLayout.ABOVE, RelativeLayout.TRUE);
+        params.setMargins(20, 1000, 0, 200);
+
+        btnMyLocation.setLayoutParams(params);
     }
 
     public void animateMarker(final Marker marker, final LatLng toPosition, final boolean hideMarker) {

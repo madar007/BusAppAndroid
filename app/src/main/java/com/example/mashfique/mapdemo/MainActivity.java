@@ -57,18 +57,20 @@ public class MainActivity extends AppCompatActivity {
         initDrawer();
         initFab();
 
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+//        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         ImageView test = (ImageView) findViewById(R.id.offline_image);
-        if (mWifi.isConnected()) {
-            if (savedInstanceState == null) {
+//        if (mWifi.isConnected()) {
+//            if (savedInstanceState == null) {
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.content_frame, new MapFragment()).commit();
-            }
-        } else {
-            mDrawerLayout.openDrawer(Gravity.LEFT);
-            test.setVisibility(View.VISIBLE);
-        }
+//            }
+//        } else {
+//            mDrawerLayout.openDrawer(Gravity.LEFT);
+//            test.setVisibility(View.VISIBLE);
+//        }
+
         //initSlideUp();
         //textView = (TextView) findViewById(R.id.text);
     }

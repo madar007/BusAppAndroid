@@ -51,6 +51,7 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.List;
@@ -73,6 +74,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     private AutoCompleteTextView toSearch;
     private GooglePlacesAutocompleteAdapter mPlacesAdapter;
     private Toolbar toolbar;
+
+    private HashMap<String, Bus> busesMap = new HashMap<String, Bus>();      // Will contain buses for a specific route
+    private HashMap<String, Marker> busMarkerMap =  new HashMap<String, Marker>();
+    int tabPosition = 0;
 
     public MapFragment() {
         // Required empty public constructor
@@ -153,62 +158,64 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 int tabPos = tab.getPosition();
+                tabPosition = tabPos;       // Set member variable for tab position (for using outside this method)
                 switch (tabPos) {
                     case 0:
+                        // Fetch route
                         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
+                        // Fetch buses
+                        long epochTime = System.currentTimeMillis() / 1000L;
+                        String epochTimeStr = Long.toString(epochTime);
+                        new FetchBusTask(MapFragment.this).execute("vehicleLocations", "umn-twin", "4thst", epochTimeStr);
                         break;
                     case 1:
+                        // Fetch route
                         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "connector");
+                        // Fetch buses
+                        epochTime = System.currentTimeMillis() / 1000L;
+                        epochTimeStr = Long.toString(epochTime);
+                        new FetchBusTask(MapFragment.this).execute("vehicleLocations", "umn-twin", "connector", epochTimeStr);
                         break;
                     case 2:
+                        // Fetch route
                         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "university");
+                        // Fetch buses
+                        epochTime = System.currentTimeMillis() / 1000L;
+                        epochTimeStr = Long.toString(epochTime);
+                        new FetchBusTask(MapFragment.this).execute("vehicleLocations", "umn-twin", "university", epochTimeStr);
                         break;
                     case 3:
+                        // Fetch route
                         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "stadium");
+                        // Fetch buses
+                        epochTime = System.currentTimeMillis() / 1000L;
+                        epochTimeStr = Long.toString(epochTime);
+                        new FetchBusTask(MapFragment.this).execute("vehicleLocations", "umn-twin", "stadium", epochTimeStr);
                         break;
                     case 4:
+                        // Fetch route
                         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "stpaul");
+                        // Fetch buses
+                        epochTime = System.currentTimeMillis() / 1000L;
+                        epochTimeStr = Long.toString(epochTime);
+                        new FetchBusTask(MapFragment.this).execute("vehicleLocations", "umn-twin", "stpaul", epochTimeStr);
                         break;
                     default:
                         break;
                 }
+                startAnimationTimer();          // take care of the buses
             }
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
                 stopAnimationTimer();
-
             }
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-                startAnimationTimer();
+                //startAnimationTimer();
             }
         });
-    }
-
-    private void placeBusMarkers() {
-        // ************************** Fake Buses:
-        Marker bus1 = mGoogleMap.addMarker(new MarkerOptions()
-                .position(new LatLng(44.976543, -93.2263679)).title("This is bus1")
-                .anchor((float) 0.5, (float) 0.5)
-                .rotation((float) 305.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
-                .flat(true));
-
-        Marker bus2 = mGoogleMap.addMarker(new MarkerOptions()
-                .position(new LatLng(44.975195, -93.245857)).title("This is bus2")
-                .anchor((float) 0.5, (float) 0.5)
-                .rotation((float) 180.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
-                .flat(true));
-
-        Marker bus3 = mGoogleMap.addMarker(new MarkerOptions()
-                .position(new LatLng(44.971342, -93.247091)).title("This is bus3")
-                .anchor((float) 0.5, (float) 0.5)
-                .rotation((float) 70.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
-                .flat(true));
     }
 
     @Override
@@ -217,6 +224,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
         mGoogleMap = googleMap;
         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
+        startAnimationTimer();      // take care of the buses
 
         if (ContextCompat.checkSelfPermission(mMapView.getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -307,11 +315,87 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                 mGoogleMap.clear();
                 setupRoute(xmlhandler);
                 setupStops(xmlhandler);
-                placeBusMarkers();
+
                 //  *********************** Take care of setting bounds :
                 LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
                 mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
 
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void processBusResults(String results) {
+        if (results != null) {
+            try {
+                SAXParserFactory factory = SAXParserFactory.newInstance();
+                SAXParser saxParser = factory.newSAXParser();
+                BusLocationXMLParser busXmlHandler = new BusLocationXMLParser();
+                saxParser.parse(new InputSource(new StringReader(results)), busXmlHandler);
+
+                // Make new markers for buses
+                if (busesMap.isEmpty()) {
+                    busesMap = busXmlHandler.getBusesMap();
+                    String id;
+                    Bus bus;
+                    for (HashMap.Entry<String, Bus> entry : busesMap.entrySet()) {
+                        id = entry.getKey();
+                        //System.out.println("BUS id: " + id);
+                        bus = entry.getValue();
+                        MarkerOptions busMarkerOptions = new MarkerOptions()
+                                .position(new LatLng(bus.getLat(), bus.getLon())).title("bus: " + bus.getId())
+                                .anchor((float) 0.5, (float) 0.5)
+                                .rotation((float) bus.getAngle())
+                                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                                .flat(true);
+                        Marker busMarker = mGoogleMap.addMarker(busMarkerOptions);  // add marker to maps
+                        busMarkerMap.put(id, busMarker);                            // add marker to hashmap
+                    }
+                }
+                else {  // Update Markers
+                    HashMap<String, Bus> tempBusesMap = busXmlHandler.getBusesMap();
+                    //System.out.print("size of tempBusesMap: " + tempBusesMap.size() + "\n");
+
+                    String id;
+                    Bus bus;
+                    // Iterate tempHashMap to compare existing buses in busesMap:
+                    for (HashMap.Entry<String, Bus> entry : tempBusesMap.entrySet()) {
+                        id = entry.getKey();
+                        bus = entry.getValue();
+                        if (busMarkerMap.containsKey(id)) {     // Update Bus
+                            busesMap.put(id, bus);
+                            System.out.println("BUS UPDATES.....");
+                            double latitude = busesMap.get(id).getLat();
+                            double longitude = busesMap.get(id).getLon();
+                            float angle = (float) busesMap.get(id).getAngle();
+                            rotateMarker(busMarkerMap.get(id),angle, mGoogleMap);
+                            animateMarker(busMarkerMap.get(id), new LatLng(latitude, longitude), false);
+                        }
+                        else {      // busesMap doesn't contain a bus, so add it to busesMap and mGoogleMap
+                            busesMap.put(id, bus);
+                            System.out.println("Adding new bus...");
+                            MarkerOptions busMarkerOptions = new MarkerOptions()
+                                    .position(new LatLng(bus.getLat(), bus.getLon())).title("bus: " + bus.getId())
+                                    .anchor((float) 0.5, (float) 0.5)
+                                    .rotation((float) bus.getAngle())
+                                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                                    .flat(true);
+                            Marker busMarker = mGoogleMap.addMarker(busMarkerOptions);  // add marker to maps
+                            busMarkerMap.put(id, busMarker);                            // add marker to hashmap
+                        }
+                    }
+                    // if busesMap has a bus that tempBusesMap doesn't contain, delete that bus
+                    for (HashMap.Entry<String, Bus> entry : busesMap.entrySet()) {
+                        id = entry.getKey();
+                        if (!tempBusesMap.containsKey(id)) {
+                            Marker marker = busMarkerMap.get(id);
+                            marker.remove();            // remove bus marker from the map
+                            busesMap.remove(id);        // remove bus from busesMap
+                            busMarkerMap.remove(id);    // remove bus from busMarkerMap (hash map containing markers)
+                        }
+                    }
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -333,6 +417,31 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                     public void run() {
                         Toast toast = Toast.makeText(getContext(), "Update markers", Toast.LENGTH_SHORT);
                         toast.show();
+
+                        // Update buses:
+                        String routeName = "";
+                        switch (tabPosition) {          // use tabPosition to determine selected route
+                            case 0:
+                                routeName = "4thst";
+                                break;
+                            case 1:
+                                routeName = "connector";
+                                break;
+                            case 2:
+                                routeName = "university";
+                                break;
+                            case 3:
+                                routeName = "stadium";
+                                break;
+                            case 4:
+                                routeName = "stpaul";
+                                break;
+                            default:
+                                break;
+                        }
+                        long epochTime = System.currentTimeMillis() / 1000L;
+                        String epochTimeStr = Long.toString(epochTime);
+                        new FetchBusTask(MapFragment.this).execute("vehicleLocations", "umn-twin", routeName, epochTimeStr);
                     }
                 });
             }
@@ -381,6 +490,97 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                     .anchor((float) 0.5, (float) 0.5)
                     .snippet("3, 8, 15 (Minutes)")
                     .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_bus_stop)));
+        }
+    }
+
+    // Used for getting bus data
+    public static class FetchBusTask extends AsyncTask<String, Void, String> {
+        private final String LOG_TAG = FetchBusTask.class.getSimpleName();
+        public AsyncResponse_FetchBusRoute delegate = null;
+
+        public FetchBusTask(MapFragment mapFragment) {
+            delegate = mapFragment;
+        }
+
+        /*
+            params[0] - command
+            params[1] - agency
+            params[2] - route
+            params[3] - epoch/unix time
+         */
+        @Override
+        protected String doInBackground(String... params) {
+            final int NUM_QUERY_PARAMS = 4;
+
+            if (params.length != NUM_QUERY_PARAMS) {
+                return null;
+            }
+
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+
+            String busInfoXmlStr = null;
+
+            try {
+                final String NEXTBUS_BASE_URL = "http://webservices.nextbus.com/service/publicXMLFeed?";
+                final String COMMAND_PARAM = "command";
+                final String AGENCY_PARAM = "a";
+                final String ROUTE_PARAM = "r";
+                final String EPOCH_TIME = "t";
+
+                Uri builtUri = Uri.parse(NEXTBUS_BASE_URL).buildUpon()
+                        .appendQueryParameter(COMMAND_PARAM, params[0])
+                        .appendQueryParameter(AGENCY_PARAM, params[1])
+                        .appendQueryParameter(ROUTE_PARAM, params[2])
+                        .appendQueryParameter(EPOCH_TIME, params[3])
+                        .build();
+
+                URL url = new URL(builtUri.toString());
+                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String currentLine;
+                while ((currentLine = reader.readLine()) != null) {
+                    buffer.append(currentLine + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    return null;
+                }
+                busInfoXmlStr = buffer.toString();
+                //Log.v(LOG_TAG, "Bus info XML String: " + busInfoXmlStr);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Error connecting to NextBus API", e);
+                return null;
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+            }
+            return busInfoXmlStr;
+        }
+
+        @Override
+        protected void onPostExecute(String xmlString) {
+            //delegate.processBusRouteResults(xmlString);
+            delegate.processBusResults(xmlString);
         }
     }
 
@@ -468,7 +668,5 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         protected void onPostExecute(String xmlString) {
             delegate.processBusRouteResults(xmlString);
         }
-
-
     }
 }

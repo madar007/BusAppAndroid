@@ -5,4 +5,5 @@ package com.example.mashfique.mapdemo;
  */
 public interface AsyncResponse_FetchBusRoute {
     void processBusRouteResults(String results);
+    void processBusResults(String xmlString);
 }

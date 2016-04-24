@@ -1,5 +1,6 @@
 package com.example.mashfique.mapdemo;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.net.Uri;
@@ -16,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
@@ -100,6 +102,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     }
 
     private void initSearches(View view) {
+        final InputMethodManager inputMethodManager = (InputMethodManager)
+                getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+
         fromSearch = (AutoCompleteTextView) toolbar.getChildAt(0).findViewById(R.id.autocomplete_from_main);
         toSearch = (AutoCompleteTextView) toolbar.getChildAt(0).findViewById(R.id.autocomplete_to_main);
         mPlacesAdapter = new GooglePlacesAutocompleteAdapter(getContext(), R.layout.autocomplete_list_item);
@@ -115,6 +120,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                 String selectedPlace = mPlacesAdapter.getItem(position).toString();
                 selectedPlace = selectedPlace.split("\n")[0];
                 fromSearch.setText(selectedPlace);
+                inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+
             }
         });
 
@@ -124,6 +132,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                 String selectedPlace = mPlacesAdapter.getItem(position).toString();
                 selectedPlace = selectedPlace.split("\n")[0];
                 toSearch.setText(selectedPlace);
+                inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
             }
         });
 

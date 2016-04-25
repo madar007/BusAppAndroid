@@ -67,6 +67,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     private GooglePlacesAutocompleteAdapter mPlacesAdapter;
     private Toolbar toolbar;
 
+    private GooglePlacesPrediction from;
+    private GooglePlacesPrediction to;
+
     public MapFragment() {
         // Required empty public constructor
     }
@@ -117,8 +120,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         fromSearch.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selectedPlace = mPlacesAdapter.getItem(position).toString();
-                selectedPlace = selectedPlace.split("\n")[0];
+                from = mPlacesAdapter.getItem(position);
+                String selectedPlace = from.getBuildingName();
                 fromSearch.setText(selectedPlace);
                 inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
                         InputMethodManager.HIDE_NOT_ALWAYS);
@@ -129,11 +132,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         toSearch.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selectedPlace = mPlacesAdapter.getItem(position).toString();
-                selectedPlace = selectedPlace.split("\n")[0];
+                to = mPlacesAdapter.getItem(position);
+                String selectedPlace = to.getBuildingName();
                 toSearch.setText(selectedPlace);
                 inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
                         InputMethodManager.HIDE_NOT_ALWAYS);
+                if (!fromSearch.getText().toString().matches("")) {
+                    showDirections(from.getPlaceID(), to.getPlaceID());
+                }
             }
         });
 
@@ -326,6 +332,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
             timer.cancel();
             timer = null;
         }
+    }
+
+    private void showDirections(String fromPlace_ID, String toPlace_ID) {
+        DirectionFetcher fetcher = new DirectionFetcher(fromPlace_ID, toPlace_ID);
+        fetcher.fetch();
     }
 
     /* This function will setup route and corresponding stops for a specific route */

@@ -18,6 +18,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -48,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
             mDrawerLayout.openDrawer(Gravity.LEFT);
             test.setVisibility(View.VISIBLE);
         }
-
-
     }
 
     private void initToolbar() {

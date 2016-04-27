@@ -183,15 +183,15 @@ public class DirectionFetcher {
                 JSONObject jsonLeg = jsonRoute.getJSONArray("legs").getJSONObject(0);
                 String startAddr = jsonLeg.getString(START_ADDR);
                 String endAddr = jsonLeg.getString(END_ADDR);
-                String arrivalTime = jsonLeg.getJSONObject(ARRIVAL_TIME).getString(JSON_TEXT);
-                String departureTime = jsonLeg.getJSONObject(DEPART_TIME).getString(JSON_TEXT);
+//                String arrivalTime = jsonLeg.getJSONObject(ARRIVAL_TIME).getString(JSON_TEXT);
+//                String departureTime = jsonLeg.getJSONObject(DEPART_TIME).getString(JSON_TEXT);
                 String distance = jsonLeg.getJSONObject(DISTANCE).getString(JSON_TEXT);
                 String duration = jsonLeg.getJSONObject(DURATION).getString(JSON_TEXT);
 
                 route.setStartAddress(startAddr);
                 route.setEndAddress(endAddr);
-                route.setArrival_time(arrivalTime);
-                route.setDeparture_time(departureTime);
+//                route.setArrival_time(arrivalTime);
+//                route.setDeparture_time(departureTime);
                 route.setDistance(distance);
                 route.setDuration(duration);
                 success = true;

@@ -22,9 +22,9 @@ public class FabDialog extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        final String[] fabOptions = {"East Bank", "West Bank", "St. Paul", "Fullscreen"};
+        final String[] fabOptions = {"Current Location", "East Bank", "West Bank", "St. Paul"};
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Map options")
+        builder.setTitle("Go to...")
                 .setItems(fabOptions, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

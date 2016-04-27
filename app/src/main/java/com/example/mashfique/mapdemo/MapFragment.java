@@ -1,6 +1,7 @@
 package com.example.mashfique.mapdemo;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -9,9 +10,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -20,8 +21,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -31,14 +36,11 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.xml.sax.InputSource;
@@ -52,9 +54,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.List;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -62,7 +64,8 @@ import javax.xml.parsers.SAXParserFactory;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncResponse_FetchBusRoute {
+public class MapFragment extends Fragment
+        implements OnMapReadyCallback, AsyncResponse_FetchBusRoute, AsyncResponse_FetchDirections {
 
     private MapView mMapView;
     private static GoogleMap mGoogleMap;
@@ -79,6 +82,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     private HashMap<String, Marker> busMarkerMap =  new HashMap<String, Marker>();
     int tabPosition = 0;
 
+    private GooglePlacesPrediction from;
+    private GooglePlacesPrediction to;
+
+    private BottomSheetBehavior directionsSheet;
+    private ArrayAdapter<Step> directionsAdapter;
+
     public MapFragment() {
         // Required empty public constructor
     }
@@ -86,8 +95,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     @Override
     public void onCreate(Bundle savedInstanceState) {
         initTabs();
+        initBottomSheet();
         animationHandler = new Handler();
         toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+
         super.onCreate(savedInstanceState);
 
     }
@@ -117,7 +128,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
     }
 
+    private void initBottomSheet() {
+        ListView bottomSheetView = (ListView) getActivity().findViewById(R.id.bottomsheet_main);
+        directionsAdapter = new ArrayAdapter<>(getContext(), R.layout.directions_list_item);
+        bottomSheetView.setAdapter(directionsAdapter);
+        directionsSheet = BottomSheetBehavior.from(bottomSheetView);
+    }
+
     private void initSearches(View view) {
+        final InputMethodManager inputMethodManager = (InputMethodManager)
+                getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+
         fromSearch = (AutoCompleteTextView) toolbar.getChildAt(0).findViewById(R.id.autocomplete_from_main);
         toSearch = (AutoCompleteTextView) toolbar.getChildAt(0).findViewById(R.id.autocomplete_to_main);
         mPlacesAdapter = new GooglePlacesAutocompleteAdapter(getContext(), R.layout.autocomplete_list_item);
@@ -130,18 +151,31 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         fromSearch.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selectedPlace = mPlacesAdapter.getItem(position).toString();
-                selectedPlace = selectedPlace.split("\n")[0];
+                from = mPlacesAdapter.getItem(position);
+                String selectedPlace = from.getBuildingName();
                 fromSearch.setText(selectedPlace);
+                inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+
+                if (!toSearch.getText().toString().matches("")) {
+                    showDirections(from.getPlaceID(), to.getPlaceID());
+                }
+
             }
         });
 
         toSearch.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selectedPlace = mPlacesAdapter.getItem(position).toString();
-                selectedPlace = selectedPlace.split("\n")[0];
+                to = mPlacesAdapter.getItem(position);
+                String selectedPlace = to.getBuildingName();
                 toSearch.setText(selectedPlace);
+                inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+
+                if (!fromSearch.getText().toString().matches("")) {
+                    showDirections(from.getPlaceID(), to.getPlaceID());
+                }
             }
         });
 
@@ -213,7 +247,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-                //startAnimationTimer();
             }
         });
     }
@@ -352,8 +385,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                         Marker busMarker = mGoogleMap.addMarker(busMarkerOptions);  // add marker to maps
                         busMarkerMap.put(id, busMarker);                            // add marker to hashmap
                     }
-                }
-                else {  // Update Markers
+                } else {  // Update Markers
                     HashMap<String, Bus> tempBusesMap = busXmlHandler.getBusesMap();
                     //System.out.print("size of tempBusesMap: " + tempBusesMap.size() + "\n");
 
@@ -369,10 +401,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                             double latitude = busesMap.get(id).getLat();
                             double longitude = busesMap.get(id).getLon();
                             float angle = (float) busesMap.get(id).getAngle();
-                            rotateMarker(busMarkerMap.get(id),angle, mGoogleMap);
+                            rotateMarker(busMarkerMap.get(id), angle, mGoogleMap);
                             animateMarker(busMarkerMap.get(id), new LatLng(latitude, longitude), false);
-                        }
-                        else {      // busesMap doesn't contain a bus, so add it to busesMap and mGoogleMap
+                        } else {      // busesMap doesn't contain a bus, so add it to busesMap and mGoogleMap
                             busesMap.put(id, bus);
                             System.out.println("Adding new bus...");
                             MarkerOptions busMarkerOptions = new MarkerOptions()
@@ -402,6 +433,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         }
     }
 
+    @Override
+    public void processDirectionsResult(List<Route> results) {
+        directionsAdapter.clear();
+        directionsAdapter.addAll(results.get(0).getListOfSteps());
+        directionsAdapter.notifyDataSetChanged();
+    }
+
     private void startAnimationTimer() {
         timer = new Timer();
         startAnimation();
@@ -415,8 +453,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                 animationHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Toast toast = Toast.makeText(getContext(), "Update markers", Toast.LENGTH_SHORT);
-                        toast.show();
+//                        Toast toast = Toast.makeText(getContext(), "Update markers", Toast.LENGTH_SHORT);
+//                        toast.show();
 
                         // Update buses:
                         String routeName = "";
@@ -453,6 +491,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
             timer.cancel();
             timer = null;
         }
+    }
+
+    private void showDirections(String fromPlace_ID, String toPlace_ID) {
+        DirectionFetcher fetcher = new DirectionFetcher(fromPlace_ID, toPlace_ID);
+        fetcher.fetch(this);
+        directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
+        directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
     /* This function will setup route and corresponding stops for a specific route */

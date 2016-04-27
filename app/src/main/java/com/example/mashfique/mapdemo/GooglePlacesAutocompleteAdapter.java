@@ -23,13 +23,15 @@ import java.util.List;
 /**
  * Created by Ragnarok on 4/15/2016.
  */
-public class GooglePlacesAutocompleteAdapter extends ArrayAdapter<String> implements Filterable {
+public class GooglePlacesAutocompleteAdapter extends ArrayAdapter<GooglePlacesPrediction> implements Filterable {
 
-    private ArrayList<String> resultList;
+    private ArrayList<GooglePlacesPrediction> resultList;
+    private Context context;
     final String LOG_TAG = this.getClass().getSimpleName() + "-autocomplete";
 
     public GooglePlacesAutocompleteAdapter(Context context, int resource) {
         super(context, resource);
+        this.context = context;
     }
 
     @Override
@@ -38,7 +40,7 @@ public class GooglePlacesAutocompleteAdapter extends ArrayAdapter<String> implem
     }
 
     @Override
-    public String getItem(int position) {
+    public GooglePlacesPrediction getItem(int position) {
         return resultList.get(position);
     }
 
@@ -59,7 +61,7 @@ public class GooglePlacesAutocompleteAdapter extends ArrayAdapter<String> implem
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 if (results != null && results.count > 0) {
-                    notifyDataSetChanged();;
+                    notifyDataSetChanged();
                 } else {
                     notifyDataSetInvalidated();
                 }
@@ -68,7 +70,7 @@ public class GooglePlacesAutocompleteAdapter extends ArrayAdapter<String> implem
         return filter;
     }
 
-    public ArrayList<String> autocomplete(String input) {
+    public ArrayList<GooglePlacesPrediction> autocomplete(String input) {
         String jsonResults = getJsonResults(input);
 
         if (jsonResults == null) {
@@ -77,7 +79,7 @@ public class GooglePlacesAutocompleteAdapter extends ArrayAdapter<String> implem
 
         //Log.v(LOG_TAG, "JSON results: " + jsonResults);
         try {
-            String prediction;
+            GooglePlacesPrediction prediction;
             JSONObject jsonObject = new JSONObject(jsonResults.toString());
             JSONArray predJsonArray = jsonObject.getJSONArray("predictions");
             resultList = new ArrayList<>();
@@ -95,35 +97,50 @@ public class GooglePlacesAutocompleteAdapter extends ArrayAdapter<String> implem
         return resultList;
     }
 
-    private String buildPrediction(JSONObject predictionObject) {
+    private GooglePlacesPrediction buildPrediction(JSONObject predictionObject) {
         final String JSON_DESCRIPTION = "description";
+        final String JSON_PLACE_ID = "place_id";
+        final String JSON_TERMS = "terms";
+        final String JSON_VALUE = "value";
         final String MINNEAPOLIS = "Minneapolis";
         final String SAINT_PAUL = "Saint Paul";
-        String prediction = null;
+        final int VALID_TERM_SIZE = 5;
 
         try {
-            String predString = predictionObject.getString(JSON_DESCRIPTION);
-            List<String> predTokens = Arrays.asList(predString.split(","));
-            String city = predTokens.get(2).trim();
+            String predDescription = predictionObject.getString(JSON_DESCRIPTION);
+            String predPlace_id = predictionObject.getString(JSON_PLACE_ID);
+            JSONArray predTerms = predictionObject.getJSONArray(JSON_TERMS);
 
-            if (city.contentEquals(MINNEAPOLIS) || city.equals(SAINT_PAUL)) {
-                prediction = predTokens.get(0);
-                prediction = prediction.concat("\n");
-                prediction = prediction.concat(predTokens.get(1));
-                prediction = prediction.concat(", ");
-                prediction = prediction.concat(predTokens.get(2));
+            List<String> predTermValues = new ArrayList<>();
+            for (int i = 0; i < predTerms.length(); i++) {
+                String jsonValue = predTerms.getJSONObject(i).getString(JSON_VALUE);
+                jsonValue = jsonValue.trim();
+                predTermValues.add(jsonValue);
+            }
+
+            if (predTermValues.contains(MINNEAPOLIS) || predTermValues.contains(SAINT_PAUL)) {
+                if (predTermValues.size() == VALID_TERM_SIZE) {
+                    String buildingName = predTermValues.get(0);
+                    String street = predTermValues.get(1);
+                    String city = predTermValues.get(2);
+                    String state = predTermValues.get(3);
+                    String country = predTermValues.get(4);
+
+                    return new GooglePlacesPrediction(predDescription, predPlace_id, buildingName,
+                            street, city, state, country);
+                }
             }
         } catch (JSONException e) {
             Log.e(LOG_TAG, "Cannot process JSON results", e);
         }
-        return prediction;
+        return null;
     }
 
     private String getJsonResults(String input) {
         final String BASE_URL_PLACES = "https://maps.googleapis.com/maps/api/place";
         final String TYPE_AUTOCOMPLETE = "/autocomplete";
         final String JSON_FORMAT = "/json";
-        final String API_KEY = "AIzaSyA29AoYe_6eR-QPHHqnJRX5SSbwbRKSPK8";
+        final String API_KEY = context.getResources().getString(R.string.browser_api_key);
         final String LOCATION = "&location=44.974127+-93.227889";
         final String RADIUS = "&radius=8000";
 

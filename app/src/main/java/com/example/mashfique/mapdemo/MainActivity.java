@@ -1,9 +1,6 @@
 package com.example.mashfique.mapdemo;
 
 import android.app.DialogFragment;
-import android.app.FragmentManager;
-import android.app.SearchManager;
-import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -14,36 +11,15 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.SearchView;
-import android.widget.TextView;
 import android.widget.Toast;
-
-
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-import com.google.android.gms.maps.SupportMapFragment;
-
-import static android.view.View.GONE;
 
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mDrawerNav;
-    //private SlidingUpPanelLayout slidingLayout;
-    private ListView mDrawerList;
-    //private ListView sliderList;
-    private ArrayAdapter<String>mDrawerAdapter;
-    //private ArrayAdapter<String>sliderAdapter;
-    //private TextView textView;
 
     private Toolbar toolbar;
     private FloatingActionButton fab;
@@ -70,21 +46,6 @@ public class MainActivity extends AppCompatActivity {
 //            mDrawerLayout.openDrawer(Gravity.LEFT);
 //            test.setVisibility(View.VISIBLE);
 //        }
-
-        //initSlideUp();
-        //textView = (TextView) findViewById(R.id.text);
-    }
-
-    private void initSlideUp(){
-        final String[] features = {"6 min (0.7 mi)", "Head right onto SE Huron Blvd",
-                "Turn left onto Washington Ave SE", "Turn right onto Walnut St SE",
-                "Turn left onto Beacon St SE", "Turn left onto Union St SE",
-                "Arrived at Kenneth H. Keller Hall"};
-        //set layout slide listener
-        //slidingLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
-       /* sliderAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, features);
-        sliderList = (ListView) findViewById(R.id.listView);
-        sliderList.setAdapter(sliderAdapter);*/
     }
 
     private void initToolbar() {
@@ -136,19 +97,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        MenuInflater inflater = getMenuInflater();
-//        inflater.inflate(R.menu.options_menu, menu);
-//
-//        SearchManager searchManager =
-//                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-//        SearchView searchView =
-//                (SearchView) menu.findItem(R.id.search).getActionView();
-//        searchView.setSearchableInfo(
-//                searchManager.getSearchableInfo(getComponentName()));
-//        return super.onCreateOptionsMenu(menu);
-//    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

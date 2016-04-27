@@ -14,14 +14,6 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_test">Test</string>
     <string name="title_activity_alarms">AlarmsActivity</string>
-    <string-array name="sports_array">
-        <item>6 min (0.7 mi)</item>
-        <item>Head right onto SE Huron Blvd</item>
-        <item>Turn left onto Washington Ave SE</item>
-        <item>Turn right onto Walnut St SE</item>
-        <item>Turn left onto Beacon St SE</item>
-        <item>Turn left onto Union St SE</item>
-        <item>Arrived at Kenneth H. Keller Hall</item>
-    </string-array>
+    <string name="browser_api_key">AIzaSyA29AoYe_6eR-QPHHqnJRX5SSbwbRKSPK8</string>
 
 </resources>

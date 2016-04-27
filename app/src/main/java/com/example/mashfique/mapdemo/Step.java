@@ -19,6 +19,10 @@ public class Step {
     LatLng transit_arrival_latlng;
     String transit_arrival_name;
 
+    public Step() {
+
+    }
+
     public String getDistance() {
         return distance;
     }
@@ -98,7 +102,15 @@ public class Step {
             case "TRANSIT":
                 return instructions + " and get off at " + transit_arrival_name;
             default:
-                return "Head into the danger zone!";
+                return "No route found!";
         }
     }
+
+    public static Step getErrorStep() {
+        Step errorStep = new Step();
+        errorStep.setTravelMode("Error");
+        return errorStep;
+    }
+
+
 }

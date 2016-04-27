@@ -436,7 +436,11 @@ public class MapFragment extends Fragment
     @Override
     public void processDirectionsResult(List<Route> results) {
         directionsAdapter.clear();
-        directionsAdapter.addAll(results.get(0).getListOfSteps());
+        if (results.size() > 0) {
+            directionsAdapter.addAll(results.get(0).getListOfSteps());
+        } else {
+            directionsAdapter.add(Step.getErrorStep());
+        }
         directionsAdapter.notifyDataSetChanged();
     }
 

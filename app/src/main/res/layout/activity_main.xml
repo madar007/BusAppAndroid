@@ -107,10 +107,11 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
                 android:layout_margin="@dimen/fab_margin"
-                android:src="@drawable/ic_map_black_24dp" />
+                android:src="@drawable/ic_place_black_24dp" />
         </FrameLayout>
 
         <include layout="@layout/bottom_sheet" />
+
     </android.support.design.widget.CoordinatorLayout>
 
     <android.support.design.widget.NavigationView

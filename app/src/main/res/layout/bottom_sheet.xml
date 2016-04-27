@@ -8,6 +8,6 @@
     app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
     android:background="@android:color/white"
     app:behavior_hideable="true"
-    app:behavior_peekHeight=".5dp">
+    app:behavior_peekHeight="1dp">
 
 </ListView>

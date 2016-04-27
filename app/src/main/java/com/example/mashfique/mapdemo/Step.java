@@ -6,7 +6,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 /**
  * Created by Ragnarok on 4/24/2016.
  */
-public class DirectionStep {
+public class Step {
 
     String distance;
     String duration;
@@ -94,7 +94,7 @@ public class DirectionStep {
     public String toString() {
         switch (travelMode) {
             case "WALKING":
-                return instructions;
+                return instructions + " - " + distance;
             case "TRANSIT":
                 return instructions + " and get off at " + transit_arrival_name;
             default:

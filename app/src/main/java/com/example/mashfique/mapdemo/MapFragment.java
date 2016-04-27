@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
@@ -19,7 +20,10 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -45,6 +49,7 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -54,7 +59,8 @@ import javax.xml.parsers.SAXParserFactory;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncResponse_FetchBusRoute {
+public class MapFragment extends Fragment
+        implements OnMapReadyCallback, AsyncResponse_FetchBusRoute, AsyncResponse_FetchDirections {
 
     private MapView mMapView;
     private static GoogleMap mGoogleMap;
@@ -70,6 +76,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     private GooglePlacesPrediction from;
     private GooglePlacesPrediction to;
 
+    private BottomSheetBehavior directionsSheet;
+    private ArrayAdapter<Step> directionsAdapter;
+
     public MapFragment() {
         // Required empty public constructor
     }
@@ -77,8 +86,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
     @Override
     public void onCreate(Bundle savedInstanceState) {
         initTabs();
+        initBottomSheet();
         animationHandler = new Handler();
         toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+
         super.onCreate(savedInstanceState);
     }
 
@@ -104,6 +115,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         mMapView.getMapAsync(this);
     }
 
+    private void initBottomSheet() {
+        ListView bottomSheetView = (ListView) getActivity().findViewById(R.id.bottomsheet_main);
+        directionsAdapter = new ArrayAdapter<>(getContext(), R.layout.directions_list_item);
+        bottomSheetView.setAdapter(directionsAdapter);
+        directionsSheet = BottomSheetBehavior.from(bottomSheetView);
+    }
+
     private void initSearches(View view) {
         final InputMethodManager inputMethodManager = (InputMethodManager)
                 getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -126,6 +144,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                 inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
                         InputMethodManager.HIDE_NOT_ALWAYS);
 
+                if (!toSearch.getText().toString().matches("")) {
+                    showDirections(from.getPlaceID(), to.getPlaceID());
+                }
+
             }
         });
 
@@ -137,6 +159,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
                 toSearch.setText(selectedPlace);
                 inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
                         InputMethodManager.HIDE_NOT_ALWAYS);
+
                 if (!fromSearch.getText().toString().matches("")) {
                     showDirections(from.getPlaceID(), to.getPlaceID());
                 }
@@ -185,7 +208,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-                startAnimationTimer();
+
             }
         });
     }
@@ -305,6 +328,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
         }
     }
 
+    @Override
+    public void processDirectionsResult(List<Route> results) {
+        directionsAdapter.clear();
+        directionsAdapter.addAll(results.get(0).getListOfSteps());
+        directionsAdapter.notifyDataSetChanged();
+    }
+
     private void startAnimationTimer() {
         timer = new Timer();
         startAnimation();
@@ -336,7 +366,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, AsyncRe
 
     private void showDirections(String fromPlace_ID, String toPlace_ID) {
         DirectionFetcher fetcher = new DirectionFetcher(fromPlace_ID, toPlace_ID);
-        fetcher.fetch();
+        fetcher.fetch(this);
+        directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
+        directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
     /* This function will setup route and corresponding stops for a specific route */

@@ -3,6 +3,7 @@ package com.example.mashfique.mapdemo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -27,6 +28,10 @@ import java.util.List;
  */
 public class DirectionFetcher {
 
+    private final String START_ADDR = "start_address";
+    private final String END_ADDR = "end_address";
+    private final String ARRIVAL_TIME = "arrival_time";
+    private final String DEPART_TIME = "departure_time";
     private final String DISTANCE = "distance";
     private final String DURATION = "duration";
     private final String END_LOCATION = "end_location";
@@ -53,7 +58,11 @@ public class DirectionFetcher {
 
     private class FetchDirectionsTask extends AsyncTask<String, Void, String> {
         private String LOG_TAG = FetchDirectionsTask.class.getSimpleName();
+        private AsyncResponse_FetchDirections context;
 
+        public FetchDirectionsTask(AsyncResponse_FetchDirections context) {
+            this.context = context;
+        }
 
         /*
             params[0] - fromPlace_ID
@@ -129,95 +138,146 @@ public class DirectionFetcher {
 
         @Override
         protected void onPostExecute(String jsonStr) {
-
-            List<List<DirectionStep>> routes = parseJsonDirections(jsonStr);
-
-            for (List<DirectionStep> route : routes) {
-
-                System.out.println("NEW ROUTE");
-                for (DirectionStep step : route) {
-                    System.out.println(step.toString());
-                }
-                System.out.println();
-            }
+            List<Route> routes = parseJsonDirections(jsonStr);
+            context.processDirectionsResult(routes);
         }
     }
 
-    private List<List<DirectionStep>> parseJsonDirections(String jsonString) {
+    private List<Route> parseJsonDirections(String jsonString) {
         if (jsonString == null) {
             return null;
         }
 
-        List<List<DirectionStep>> listOfRoutes = null;
+        List<Route> routes = null;
         try {
             final String JSON_ROUTES = "routes";
-            List<DirectionStep> route;
-            JSONObject jsonObject = new JSONObject(jsonString);
-            JSONArray routeArray = jsonObject.getJSONArray(JSON_ROUTES);
-            JSONObject jsonRoute;
+            JSONObject jsonResponse = new JSONObject(jsonString);
+            JSONArray jsonRoutes = jsonResponse.getJSONArray(JSON_ROUTES);
+            routes = new ArrayList<>();
 
-            listOfRoutes = new ArrayList<>();
-            for (int i = 0; i < routeArray.length(); i++) {
-                jsonRoute = routeArray.getJSONObject(i);
-                route = parseJsonLeg(jsonRoute);
-
-                if (route != null) {
-                    listOfRoutes.add(route);
+            JSONObject jsonNewRoute;
+            Route newRoute;
+            List<Step> steps;
+            for (int i = 0; i < jsonRoutes.length(); i++) {
+                jsonNewRoute = jsonRoutes.getJSONObject(i);
+                newRoute = new Route();
+                if (parseJsonRouteSummary(jsonNewRoute, newRoute)) {
+                    steps = parseJsonLeg(jsonNewRoute);
+                    if (steps != null) {
+                        newRoute.addAllSteps(steps);
+                        routes.add(newRoute);
+                    }
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return listOfRoutes;
+        return routes;
     }
 
-    private List<DirectionStep> parseJsonLeg(JSONObject jsonRoute) {
+    private boolean parseJsonRouteSummary(JSONObject jsonRoute, Route route) {
 
-        List<DirectionStep> listOfSteps = null;
+        boolean success = false;
         try {
-            JSONArray jsonLegs = jsonRoute.getJSONArray("legs");
-            JSONArray jsonSteps = jsonLegs.getJSONObject(0).getJSONArray(STEPS);
+            if (route != null) {
+                JSONObject jsonLeg = jsonRoute.getJSONArray("legs").getJSONObject(0);
+                String startAddr = jsonLeg.getString(START_ADDR);
+                String endAddr = jsonLeg.getString(END_ADDR);
+                String arrivalTime = jsonLeg.getJSONObject(ARRIVAL_TIME).getString(JSON_TEXT);
+                String departureTime = jsonLeg.getJSONObject(DEPART_TIME).getString(JSON_TEXT);
+                String distance = jsonLeg.getJSONObject(DISTANCE).getString(JSON_TEXT);
+                String duration = jsonLeg.getJSONObject(DURATION).getString(JSON_TEXT);
 
-            DirectionStep currentStep;
-            listOfSteps = new ArrayList<>();
+                route.setStartAddress(startAddr);
+                route.setEndAddress(endAddr);
+                route.setArrival_time(arrivalTime);
+                route.setDeparture_time(departureTime);
+                route.setDistance(distance);
+                route.setDuration(duration);
+                success = true;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return success;
+    }
+
+    private List<Step> parseJsonLeg(JSONObject jsonRoute) {
+
+        List<Step> steps = null;
+        try {
+            JSONObject jsonLeg = jsonRoute.getJSONArray("legs").getJSONObject(0);
+            JSONArray jsonSteps = jsonLeg.getJSONArray(STEPS);
+            steps = new ArrayList<>();
+
+            JSONObject jsonCurrentStep;
+            JSONArray jsonDetailedSteps;
+            List<Step> detailedSteps;
+            Step currentStep;
+            boolean successfulParse = true;
             for (int i = 0; i < jsonSteps.length(); i++) {
-                JSONObject step = jsonSteps.getJSONObject(i);
+                jsonCurrentStep = jsonSteps.getJSONObject(i);
 
-                if (step.getString(TRAVEL_MODE).equals(TRAVEL_TRANSIT)) {
-                    currentStep = parseJsonTransit(step);
+                if (jsonCurrentStep.getString(TRAVEL_MODE).equals(TRAVEL_TRANSIT)) {
+                    currentStep = parseJsonTransit(jsonCurrentStep);
+                    if (currentStep != null) {
+                        steps.add(currentStep);
+                    } else {
+                        successfulParse = false;
+                    }
                 } else {
-                    currentStep = parseJsonWalking(step);
+                    jsonDetailedSteps = jsonCurrentStep.getJSONArray(STEPS);
+                    detailedSteps = parseJsonDetailSteps(jsonDetailedSteps);
+                    if (detailedSteps != null) {
+                        steps.addAll(detailedSteps);
+                    } else {
+                        successfulParse = false;
+                    }
                 }
 
-                if (currentStep != null) {
-                    listOfSteps.add(currentStep);
-                } else {
-                    listOfSteps = null;
-                    return null;
+                if (!successfulParse) {
+                    steps = null;
+                    return steps;
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return listOfSteps;
+        return steps;
     }
 
-    private DirectionStep parseJsonWalking(JSONObject walkingStep) {
-        DirectionStep step = null;
+    private List<Step> parseJsonDetailSteps(JSONArray jsonDetailedSteps) {
+        List<Step> detailedSteps = null;
+        try {
+            detailedSteps = new ArrayList<>();
+            for (int i = 0; i < jsonDetailedSteps.length(); i++) {
+                Step currentStep = parseJsonWalking(jsonDetailedSteps.getJSONObject(i));
+                if (currentStep != null) {
+                    detailedSteps.add(currentStep);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return detailedSteps;
+    }
+
+    private Step parseJsonWalking(JSONObject jsonWalking) {
+        Step step = null;
         try {
             LatLng start_latLng;
             LatLng end_latlng;
             PolylineOptions polylineOptions;
-            step = new DirectionStep();
+            step = new Step();
 
-            step.setDistance(walkingStep.getJSONObject(DISTANCE).getString(JSON_TEXT));
-            step.setDuration(walkingStep.getJSONObject(DURATION).getString(JSON_TEXT));
-            end_latlng = new LatLng(walkingStep.getJSONObject(END_LOCATION).getDouble(LAT),
-                    walkingStep.getJSONObject(END_LOCATION).getDouble(LNG));
+            step.setDistance(jsonWalking.getJSONObject(DISTANCE).getString(JSON_TEXT));
+            step.setDuration(jsonWalking.getJSONObject(DURATION).getString(JSON_TEXT));
+            end_latlng = new LatLng(jsonWalking.getJSONObject(END_LOCATION).getDouble(LAT),
+                    jsonWalking.getJSONObject(END_LOCATION).getDouble(LNG));
             step.setEndLocation(end_latlng);
-            step.setInstructions(walkingStep.getString(INSTRUCTIONS));
+            step.setInstructions(cleanHtmlDirections(jsonWalking.getString(INSTRUCTIONS)));
 
-            String encodedPolyLine = walkingStep.getJSONObject(POLYLINE).getString(POINTS);
+            String encodedPolyLine = jsonWalking.getJSONObject(POLYLINE).getString(POINTS);
             polylineOptions = new PolylineOptions();
             polylineOptions.color(Color.BLUE);
             polylineOptions.width(10);
@@ -225,11 +285,11 @@ public class DirectionFetcher {
             polylineOptions.addAll(PolyUtil.decode(encodedPolyLine));
             step.setPolylineOptions(polylineOptions);
 
-            start_latLng = new LatLng(walkingStep.getJSONObject(START_LOCATION).getDouble(LAT),
-                    walkingStep.getJSONObject(START_LOCATION).getDouble(LNG));
+            start_latLng = new LatLng(jsonWalking.getJSONObject(START_LOCATION).getDouble(LAT),
+                    jsonWalking.getJSONObject(START_LOCATION).getDouble(LNG));
             step.setStartLocation(start_latLng);
 
-            step.setTravelMode(walkingStep.getString(TRAVEL_MODE));
+            step.setTravelMode(jsonWalking.getString(TRAVEL_MODE));
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -237,24 +297,24 @@ public class DirectionFetcher {
         return step;
     }
 
-    private DirectionStep parseJsonTransit(JSONObject transitStep) {
-        DirectionStep step = null;
+    private Step parseJsonTransit(JSONObject jsonTransit) {
+        Step step = null;
         try {
             LatLng start_latLng;
             LatLng end_latlng;
             PolylineOptions polylineOptions;
-            step = new DirectionStep();
+            step = new Step();
 
-            if (parseJsonTransitDetails(step, transitStep.getJSONObject(TRANSIT_DETAILS))) {
+            if (parseJsonTransitDetails(step, jsonTransit.getJSONObject(TRANSIT_DETAILS))) {
 
-                step.setDistance(transitStep.getJSONObject(DISTANCE).getString(JSON_TEXT));
-                step.setDuration(transitStep.getJSONObject(DURATION).getString(JSON_TEXT));
-                end_latlng = new LatLng(transitStep.getJSONObject(END_LOCATION).getDouble(LAT),
-                        transitStep.getJSONObject(END_LOCATION).getDouble(LNG));
+                step.setDistance(jsonTransit.getJSONObject(DISTANCE).getString(JSON_TEXT));
+                step.setDuration(jsonTransit.getJSONObject(DURATION).getString(JSON_TEXT));
+                end_latlng = new LatLng(jsonTransit.getJSONObject(END_LOCATION).getDouble(LAT),
+                        jsonTransit.getJSONObject(END_LOCATION).getDouble(LNG));
                 step.setEndLocation(end_latlng);
-                step.setInstructions(transitStep.getString(INSTRUCTIONS));
+                step.setInstructions(jsonTransit.getString(INSTRUCTIONS));
 
-                String encodedPolyLine = transitStep.getJSONObject(POLYLINE).getString(POINTS);
+                String encodedPolyLine = jsonTransit.getJSONObject(POLYLINE).getString(POINTS);
                 polylineOptions = new PolylineOptions();
                 polylineOptions.color(Color.BLUE);
                 polylineOptions.width(10);
@@ -262,10 +322,10 @@ public class DirectionFetcher {
                 polylineOptions.addAll(PolyUtil.decode(encodedPolyLine));
                 step.setPolylineOptions(polylineOptions);
 
-                start_latLng = new LatLng(transitStep.getJSONObject(START_LOCATION).getDouble(LAT),
-                        transitStep.getJSONObject(START_LOCATION).getDouble(LNG));
+                start_latLng = new LatLng(jsonTransit.getJSONObject(START_LOCATION).getDouble(LAT),
+                        jsonTransit.getJSONObject(START_LOCATION).getDouble(LNG));
                 step.setStartLocation(start_latLng);
-                step.setTravelMode(transitStep.getString(TRAVEL_MODE));
+                step.setTravelMode(jsonTransit.getString(TRAVEL_MODE));
             } else {
                 step = null;
                 return null;
@@ -277,7 +337,7 @@ public class DirectionFetcher {
         return step;
     }
 
-    private boolean parseJsonTransitDetails(DirectionStep step, JSONObject transitDetails) {
+    private boolean parseJsonTransitDetails(Step step, JSONObject transitDetails) {
 
         final String ARRIVAL_STOP = "arrival_stop";
         final String ARRIVAL_LOCATION = "location";
@@ -316,9 +376,18 @@ public class DirectionFetcher {
         return false;
     }
 
-    public void fetch() {
-        FetchDirectionsTask newTask = new FetchDirectionsTask();
+    private String cleanHtmlDirections(String html_direction) {
+        if (html_direction != null) {
+            return html_direction.replaceAll("\\<.*?\\>", "");
+        } else {
+            return "";
+        }
+    }
+
+    public void fetch(AsyncResponse_FetchDirections context) {
+        FetchDirectionsTask newTask = new FetchDirectionsTask(context);
         newTask.execute(fromPlace_ID, toPlace_ID);
     }
+
 
 }

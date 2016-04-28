@@ -25,7 +25,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -69,17 +68,18 @@ public class MapFragment extends Fragment
 
     private MapView mMapView;
     private static GoogleMap mGoogleMap;
-    private TabLayout mTabLayout;
     private Timer timer;
     private TimerTask timerMarkerTask;
     private Handler animationHandler;
+
+    private Toolbar toolbar;
     private AutoCompleteTextView fromSearch;
     private AutoCompleteTextView toSearch;
     private GooglePlacesAutocompleteAdapter mPlacesAdapter;
-    private Toolbar toolbar;
+    private TabLayout mTabLayout;
 
     private HashMap<String, Bus> busesMap = new HashMap<String, Bus>();      // Will contain buses for a specific route
-    private HashMap<String, Marker> busMarkerMap =  new HashMap<String, Marker>();
+    private HashMap<String, Marker> busMarkerMap = new HashMap<String, Marker>();
     int tabPosition = 0;
 
     private GooglePlacesPrediction from;
@@ -94,28 +94,18 @@ public class MapFragment extends Fragment
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        initTabs();
-        initBottomSheet();
         animationHandler = new Handler();
         toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
-
+        initTabs();
+        initBottomSheet();
+        initMap(savedInstanceState);
+        initSearches();
         super.onCreate(savedInstanceState);
 
     }
 
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
-        View rootView = inflater.inflate(R.layout.activity_main, container, false);
-        initMap(rootView, savedInstanceState);
-        initSearches(rootView);
-        return rootView;
-    }
-
-    private void initMap(View view, Bundle savedInstanceState) {
-        mMapView = (MapView) view.findViewById(R.id.mapView);
+    private void initMap(Bundle savedInstanceState) {
+        mMapView = (MapView) getActivity().findViewById(R.id.mapView);
         mMapView.onCreate(savedInstanceState);
         mMapView.onResume();
         try {
@@ -135,7 +125,7 @@ public class MapFragment extends Fragment
         directionsSheet = BottomSheetBehavior.from(bottomSheetView);
     }
 
-    private void initSearches(View view) {
+    private void initSearches() {
         final InputMethodManager inputMethodManager = (InputMethodManager)
                 getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
 
@@ -251,11 +241,61 @@ public class MapFragment extends Fragment
         });
     }
 
+    private void showDirections(String fromPlace_ID, String toPlace_ID) {
+        DirectionFetcher fetcher = new DirectionFetcher(fromPlace_ID, toPlace_ID);
+        fetcher.fetch(this);
+        directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
+        directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    }
+
+    public void refocus(String location) {
+        switch (location) {
+            case "Current Location":
+                break;
+            case "East Bank":
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(44.975128, -93.2371807)));
+                break;
+            case "West Bank":
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(44.972418, -93.2463107)));
+                break;
+            case "St. Paul":
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(44.984442, -93.1836874)));
+                break;
+        }
+    }
+
+    private void placeBusMarkers() {
+        // ************************** Fake Buses:
+        Marker bus1 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.976543, -93.2263679)).title("This is bus1")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 305.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
+
+        Marker bus2 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.975195, -93.245857)).title("This is bus2")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 180.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
+
+        Marker bus3 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.971342, -93.247091)).title("This is bus3")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 70.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
         mGoogleMap = googleMap;
+        mGoogleMap.setMyLocationEnabled(true);
+        mGoogleMap.getUiSettings().setMyLocationButtonEnabled(false);
+        mGoogleMap.getUiSettings().setCompassEnabled(true);
         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
         startAnimationTimer();      // take care of the buses
 
@@ -266,7 +306,7 @@ public class MapFragment extends Fragment
             // Show rationale and request permission.
         }
         View btnMyLocation = ((View) mMapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100,100); // size of button in dp
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100, 100); // size of button in dp
         //params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
         params.addRule(RelativeLayout.ABOVE, RelativeLayout.TRUE);
         params.setMargins(20, 1000, 0, 200);
@@ -495,13 +535,6 @@ public class MapFragment extends Fragment
             timer.cancel();
             timer = null;
         }
-    }
-
-    private void showDirections(String fromPlace_ID, String toPlace_ID) {
-        DirectionFetcher fetcher = new DirectionFetcher(fromPlace_ID, toPlace_ID);
-        fetcher.fetch(this);
-        directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
-        directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
     /* This function will setup route and corresponding stops for a specific route */

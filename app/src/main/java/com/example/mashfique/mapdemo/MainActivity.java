@@ -1,6 +1,7 @@
 package com.example.mashfique.mapdemo;
 
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -11,18 +12,22 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+
+public class MainActivity extends AppCompatActivity implements FabDialog.OnSelectedFocusListener{
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mDrawerNav;
 
     private Toolbar toolbar;
     private FloatingActionButton fab;
+    private MapFragment mapFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,18 +39,19 @@ public class MainActivity extends AppCompatActivity {
         initFab();
 
 
-//        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         ImageView test = (ImageView) findViewById(R.id.offline_image);
-//        if (mWifi.isConnected()) {
-//            if (savedInstanceState == null) {
+        if (mWifi.isConnected()) {
+            if (savedInstanceState == null) {
+                mapFragment = new MapFragment();
                 getSupportFragmentManager().beginTransaction()
-                        .add(R.id.content_frame, new MapFragment()).commit();
-//            }
-//        } else {
-//            mDrawerLayout.openDrawer(Gravity.LEFT);
-//            test.setVisibility(View.VISIBLE);
-//        }
+                        .add(R.id.content_frame, mapFragment).commit();
+            }
+        } else {
+            mDrawerLayout.openDrawer(Gravity.LEFT);
+            test.setVisibility(View.VISIBLE);
+        }
     }
 
     private void initToolbar() {
@@ -97,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -109,4 +114,8 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onSelectedFocus(String location) {
+        mapFragment.refocus(location);
+    }
 }

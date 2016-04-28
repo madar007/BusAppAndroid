@@ -21,13 +21,14 @@ import android.widget.Toast;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements FabDialog.OnSelectedFocusListener{
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mDrawerNav;
 
     private Toolbar toolbar;
     private FloatingActionButton fab;
+    private MapFragment mapFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +44,9 @@ public class MainActivity extends AppCompatActivity {
         ImageView test = (ImageView) findViewById(R.id.offline_image);
         if (mWifi.isConnected()) {
             if (savedInstanceState == null) {
+                mapFragment = new MapFragment();
                 getSupportFragmentManager().beginTransaction()
-                        .add(R.id.content_frame, new MapFragment()).commit();
+                        .add(R.id.content_frame, mapFragment).commit();
             }
         } else {
             mDrawerLayout.openDrawer(Gravity.LEFT);
@@ -100,7 +102,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -112,4 +113,8 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onSelectedFocus(String location) {
+        mapFragment.refocus(location);
+    }
 }

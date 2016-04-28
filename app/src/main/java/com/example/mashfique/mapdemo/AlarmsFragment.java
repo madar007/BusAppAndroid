@@ -19,11 +19,7 @@ import java.util.Random;
 
 public class AlarmsFragment extends Fragment {
 
-    private ArrayAdapter<String> mAlarmsAdapter;
-    private String[] fakeAlarms = {"Coffman - MWF - 1:00pm - 10 minutes before",
-            "Cybertron - F - 2:00pm - 10 days before",
-            "Planet of the Apes - MT - 6:30pm - 5 minutes before"
-    };
+    private ArrayAdapter<Alarm> mAlarmsAdapter;
     FloatingActionButton fab;
 
 
@@ -34,13 +30,11 @@ public class AlarmsFragment extends Fragment {
     }
 
     private void initFab() {
-        final Random rand = new Random();
+        //final Random rand = new Random();
         fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mAlarmsAdapter.add(fakeAlarms[rand.nextInt(3)]);
-                mAlarmsAdapter.notifyDataSetChanged();
                 getActivity().getSupportFragmentManager().beginTransaction()
                         .replace(R.id.container_alarm_activity, new AddAlarmFragment(), null)
                         .addToBackStack(null)
@@ -54,7 +48,7 @@ public class AlarmsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_alarms, container, false);
         if (mAlarmsAdapter == null) {
-            mAlarmsAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, new ArrayList<String>());
+            mAlarmsAdapter = new ArrayAdapter<>(getActivity(), R.layout.alarms_list_item, new ArrayList<Alarm>());
         } else {
             Snackbar.make(rootView, "Alarm added!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
@@ -65,4 +59,8 @@ public class AlarmsFragment extends Fragment {
         return rootView;
     }
 
+    public void addAlarm(Alarm newAlarm) {
+        mAlarmsAdapter.add(newAlarm);
+        mAlarmsAdapter.notifyDataSetChanged();
+    }
 }

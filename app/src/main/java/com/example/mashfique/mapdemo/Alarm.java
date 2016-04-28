@@ -10,19 +10,13 @@ public class Alarm {
     private String atTime;
     private String beforeTime;
     private String frequency;
-    private String[] days;
-
-    public Alarm(String alarmName, String busStop, String atTime, String beforeTime, String frequency, String[] days) {
-        this.alarmName = alarmName;
-        this.busStop = busStop;
-        this.atTime = atTime;
-        this.beforeTime = beforeTime;
-        this.frequency = frequency;
-        this.days = days;
-    }
+    private boolean[] days;
 
     public Alarm() {
-        this("","","","","",new String[0]);
+        days = new boolean[7];
+        for (int i = 0; i < days.length; i++) {
+            days[i] = false;
+        }
     }
 
     public void setAlarmName(String alarmName) {
@@ -45,80 +39,45 @@ public class Alarm {
         this.frequency = frequency;
     }
 
-    public void setDays(String[] days) {
-        this.days = days;
-    }
-
-    public String getAlarmName() {
-        return alarmName;
-    }
-
-    public String getBusStop() {
-        return busStop;
-    }
-
-    public String getAtTime() {
-        return atTime;
-    }
-
-    public String getBeforeTime() {
-        return beforeTime;
-    }
-
-    public String getFrequency() {
-        return frequency;
-    }
-
-    public String[] getDays() {
-        return days;
-    }
-
     public String toString() {
-        final String DELIMITER = " - ";
         String alarm = "";
-        alarm.concat(alarmName)
-                .concat(DELIMITER)
-                .concat(frequency)
-                .concat("\n")
-                .concat(busStop)
-                .concat(DELIMITER)
-                .concat(getShortenDays())
-                .concat(DELIMITER)
-                .concat(atTime)
-                .concat(DELIMITER)
-                .concat(beforeTime);
+        alarm = busStop + " - " + getShortenDays() + " - " + atTime + ", " + beforeTime + " min before";
         return alarm;
     }
 
     private String getShortenDays() {
         String shortenDays = "";
-        for (String  day : days) {
-            switch (day) {
-                case "Sun":
-                    shortenDays+="Su";
-                    break;
-                case "Mon":
-                    shortenDays+="M";
-                    break;
-                case "Tue":
-                    shortenDays+="Tu";
-                    break;
-                case "Wed":
-                    shortenDays+="W";
-                    break;
-                case "Thu":
-                    shortenDays+="Th";
-                    break;
-                case "Fri":
-                    shortenDays+="F";
-                    break;
-                case "Sat":
-                    shortenDays+="Sa";
-                    break;
-                default:
-                    break;
+        for (int i = 0; i < days.length; i++) {
+            if (days[i]) {
+                switch (i) {
+                    case 0:
+                        shortenDays+="Su";
+                        break;
+                    case 1:
+                        shortenDays+="M";
+                        break;
+                    case 2:
+                        shortenDays+="Tu";
+                        break;
+                    case 3:
+                        shortenDays+="W";
+                        break;
+                    case 4:
+                        shortenDays+="Th";
+                        break;
+                    case 5:
+                        shortenDays+="F";
+                        break;
+                    case 6:
+                        shortenDays+="Sa";
+                        break;
+                }
             }
         }
         return shortenDays;
+    }
+
+    public void addDay(int i) {
+        days[i] = true;
     }
 }

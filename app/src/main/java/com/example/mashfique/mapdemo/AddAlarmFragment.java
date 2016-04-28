@@ -1,6 +1,7 @@
 package com.example.mashfique.mapdemo;
 
 
+import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -38,6 +39,7 @@ public class AddAlarmFragment extends Fragment {
     private Spinner beforeSpinner;
     private Button frequency;
     private Alarm newAlarm;
+    private OnNewAlarmCreationListener mListener;
 
     public AddAlarmFragment() {
         // Required empty public constructor
@@ -180,10 +182,36 @@ public class AddAlarmFragment extends Fragment {
 
     private void addAlarm() {
         newAlarm.setAlarmName(alarmName.getText().toString());
-        System.out.println(newAlarm.toString());
+        newAlarm.setBusStop(busStop.getText().toString());
+        setAlarmDays();
+        newAlarm.setBeforeTime(beforeSpinner.getSelectedItem().toString());
+        newAlarm.setAtTime(atTime.getText().toString());
+        newAlarm.setFrequency(frequency.getText().toString());
+
+        mListener.onNewAlarmCreation(newAlarm);
         toolbar.setTitle(activityToolbarTitle);
         getActivity().getSupportFragmentManager().popBackStack();
     }
 
+    private void setAlarmDays() {
+        for (int i = 0; i < days.length; i++) {
+            if (days[i].isChecked()) {
+                newAlarm.addDay(i);
+            }
+        }
+    }
 
+    public interface OnNewAlarmCreationListener {
+        void onNewAlarmCreation(Alarm newAlarm);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnNewAlarmCreationListener) activity;
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -51,6 +51,8 @@ public class DirectionFetcher {
     private String fromPlace_ID;
     private String toPlace_ID;
 
+    private String LOG_TAG = DirectionFetcher.class.getSimpleName();
+
     public DirectionFetcher(String fromPlace_ID, String toPlace_ID) {
         this.fromPlace_ID = fromPlace_ID;
         this.toPlace_ID = toPlace_ID;
@@ -170,7 +172,7 @@ public class DirectionFetcher {
                 }
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
         return routes;
     }
@@ -197,7 +199,7 @@ public class DirectionFetcher {
                 success = true;
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
         return success;
     }
@@ -241,7 +243,7 @@ public class DirectionFetcher {
                 }
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
         return steps;
     }
@@ -257,7 +259,7 @@ public class DirectionFetcher {
                 }
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
         return detailedSteps;
     }
@@ -292,7 +294,7 @@ public class DirectionFetcher {
             step.setTravelMode(jsonWalking.getString(TRAVEL_MODE));
 
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
         return step;
     }
@@ -332,7 +334,7 @@ public class DirectionFetcher {
             }
 
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
         return step;
     }
@@ -357,7 +359,7 @@ public class DirectionFetcher {
                 return false;
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
         return false;
     }
@@ -371,7 +373,7 @@ public class DirectionFetcher {
         try {
             return transitDetails.getJSONObject(LINE).getJSONArray(AGENCIES).getJSONObject(0).getString(AGENCY_NAME).equals(UOFMN);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
         return false;
     }

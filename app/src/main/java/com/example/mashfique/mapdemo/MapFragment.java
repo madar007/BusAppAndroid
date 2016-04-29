@@ -5,20 +5,22 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.inputmethod.InputMethodManager;
@@ -54,6 +56,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -87,6 +90,10 @@ public class MapFragment extends Fragment
 
     private BottomSheetBehavior directionsSheet;
     private ArrayAdapter<Step> directionsAdapter;
+    private Stack<Step> directionsStack;
+    private FloatingActionButton fab_direc_prev;
+    private FloatingActionButton fab_direc_next;
+    private FloatingActionButton fab_direc_stop;
 
     public MapFragment() {
         // Required empty public constructor
@@ -98,9 +105,55 @@ public class MapFragment extends Fragment
         toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
         initTabs();
         initBottomSheet();
+        initDirectionFabs();
         initMap(savedInstanceState);
         initSearches();
         super.onCreate(savedInstanceState);
+
+    }
+
+    private void initDirectionFabs() {
+        fab_direc_prev = (FloatingActionButton) getActivity().findViewById(R.id.fab_prev_direction);
+        fab_direc_next = (FloatingActionButton) getActivity().findViewById(R.id.fab_next_direction);
+        fab_direc_stop = (FloatingActionButton) getActivity().findViewById(R.id.fab_stop_direction);
+
+        fab_direc_prev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!directionsStack.isEmpty()) {
+                    Step previousStep = directionsStack.pop();
+                    directionsAdapter.insert(previousStep, 0);
+                    directionsAdapter.notifyDataSetChanged();
+                }
+            }
+        });
+
+        fab_direc_next.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (directionsAdapter.getCount() != 1) {
+                    Step currentStep = directionsAdapter.getItem(0);
+                    directionsStack.push(currentStep);
+                    directionsAdapter.remove(currentStep);
+                    directionsAdapter.notifyDataSetChanged();
+                }
+            }
+        });
+
+        fab_direc_stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                directionsAdapter.clear();
+                directionsAdapter.notifyDataSetChanged();
+                directionsSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
+                fab_direc_next.hide();
+                fab_direc_stop.hide();
+                fab_direc_prev.hide();
+                directionsStack.clear();
+                toSearch.setText("");
+                fromSearch.setText("");
+            }
+        });
 
     }
 
@@ -119,10 +172,38 @@ public class MapFragment extends Fragment
     }
 
     private void initBottomSheet() {
-        ListView bottomSheetView = (ListView) getActivity().findViewById(R.id.bottomsheet_main);
+        final ListView bottomSheetView = (ListView) getActivity().findViewById(R.id.bottomsheet_main);
         directionsAdapter = new ArrayAdapter<>(getContext(), R.layout.directions_list_item);
         bottomSheetView.setAdapter(directionsAdapter);
         directionsSheet = BottomSheetBehavior.from(bottomSheetView);
+        directionsSheet.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(View bottomSheet, int newState) {
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        fab_direc_prev.hide();
+                        fab_direc_stop.hide();
+                        fab_direc_next.hide();
+                        break;
+                    case BottomSheetBehavior.STATE_DRAGGING:
+                        if (!fab_direc_next.isShown()) {
+                            fab_direc_next.show();
+                            fab_direc_prev.show();
+                            fab_direc_stop.show();
+                        }
+                        break;
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        bottomSheetView.setSelection(0);
+                        break;
+                }
+            }
+
+            @Override
+            public void onSlide(View bottomSheet, float slideOffset) {
+
+            }
+        });
     }
 
     private void initSearches() {
@@ -246,6 +327,13 @@ public class MapFragment extends Fragment
         fetcher.fetch(this);
         directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
         directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+        if (directionsStack == null) {
+            directionsStack = new Stack<>();
+        }
+        fab_direc_prev.show();
+        fab_direc_next.show();
+        fab_direc_stop.show();
     }
 
     public void refocus(String location) {
@@ -253,13 +341,13 @@ public class MapFragment extends Fragment
             case "Current Location":
                 break;
             case "East Bank":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(44.975128, -93.2371807)));
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.974825, -93.229518), 15f));
                 break;
             case "West Bank":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(44.972418, -93.2463107)));
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.971612, -93.241614), 16f));
                 break;
             case "St. Paul":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(44.984442, -93.1836874)));
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.984442, -93.1836874), 15f));
                 break;
         }
     }
@@ -476,7 +564,7 @@ public class MapFragment extends Fragment
     @Override
     public void processDirectionsResult(List<Route> results) {
         directionsAdapter.clear();
-        if (results.size() > 0) {
+        if ((results != null) && (results.size() > 0)) {
             directionsAdapter.addAll(results.get(0).getListOfSteps());
         } else {
             directionsAdapter.add(Step.getErrorStep());

@@ -1,41 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="@dimen/activity_horizontal_margin"
-    android:layout_marginRight="@dimen/activity_horizontal_margin"
+    android:layout_marginStart="@dimen/activity_horizontal_margin"
+    android:layout_marginEnd="@dimen/activity_horizontal_margin"
     android:orientation="vertical">
 
-    <!-- TODO: Update blank fragment layout -->
-    <EditText
-        android:id="@+id/alarm_name_field"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:hint="Alarm name"
-        android:imeOptions="actionNext"
-        android:inputType="text"
-        android:nextFocusDown="@+id/alarm_bus_stop_search"
-        android:paddingBottom="15dp"
-        android:paddingTop="15dp"
-        android:singleLine="true" />
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:weightSum="10">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/darker_gray" />
+        <TextView
+            android:id="@+id/dialog_edit_alarm_title"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="6"
+            android:textSize="15sp"
+            android:gravity="start|center"
+            android:text="Editing Alarm" />
 
-    <AutoCompleteTextView
-        android:id="@+id/alarm_bus_stop_search"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:drawablePadding="3dp"
-        android:hint="Bus stop"
-        android:imeOptions="actionDone"
-        android:paddingBottom="15dp"
-        android:paddingTop="15dp"
-        android:singleLine="true" />
+        <ToggleButton
+            android:id="@+id/dialog_edit_onoff"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="4"
+            android:textOff="Off"
+            android:textOn="On"/>
+
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
@@ -47,8 +42,8 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="15dp"
         android:layout_marginTop="15dp"
-        android:baselineAligned="false"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:baselineAligned="false">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -61,13 +56,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Sun" />
-
+                android:text="Sun"/>
             <CheckBox
-                android:id="@+id/checkbox_sunday"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
+                android:gravity="center"
+                android:id="@+id/dialog_edit_checkbox_sunday" />
         </LinearLayout>
 
         <LinearLayout
@@ -81,13 +75,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Mon" />
-
+                android:text="Mon"/>
             <CheckBox
-                android:id="@+id/checkbox_monday"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
+                android:gravity="center"
+                android:id="@+id/dialog_edit_checkbox_monday" />
         </LinearLayout>
 
         <LinearLayout
@@ -101,13 +94,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Tue" />
-
+                android:text="Tue"/>
             <CheckBox
-                android:id="@+id/checkbox_tuesday"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
+                android:gravity="center"
+                android:id="@+id/dialog_edit_checkbox_tuesday" />
         </LinearLayout>
 
         <LinearLayout
@@ -121,13 +113,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Wed" />
-
+                android:text="Wed"/>
             <CheckBox
-                android:id="@+id/checkbox_wednesday"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
+                android:gravity="center"
+                android:id="@+id/dialog_edit_checkbox_wednesday" />
         </LinearLayout>
 
         <LinearLayout
@@ -141,13 +132,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Thu" />
-
+                android:text="Thu"/>
             <CheckBox
-                android:id="@+id/checkbox_thursday"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
+                android:gravity="center"
+                android:id="@+id/dialog_edit_checkbox_thursday" />
         </LinearLayout>
 
         <LinearLayout
@@ -161,13 +151,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Fri" />
-
+                android:text="Fri"/>
             <CheckBox
-                android:id="@+id/checkbox_friday"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
+                android:gravity="center"
+                android:id="@+id/dialog_edit_checkbox_friday" />
         </LinearLayout>
 
         <LinearLayout
@@ -181,13 +170,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Sat" />
-
+                android:text="Sat"/>
             <CheckBox
-                android:id="@+id/checkbox_saturday"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center" />
+                android:gravity="center"
+                android:id="@+id/dialog_edit_checkbox_saturday" />
         </LinearLayout>
 
     </LinearLayout>
@@ -200,9 +188,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:baselineAligned="false"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:baselineAligned="false">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -211,12 +199,12 @@
             android:gravity="center">
 
             <Button
-                android:id="@+id/button_alarm_at"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
                 android:stateListAnimator="@null"
-                android:text="At " />
+                android:text="At "
+                android:id="@+id/dialog_edit_button_alarm_at" />
         </LinearLayout>
 
         <LinearLayout
@@ -228,14 +216,14 @@
 
 
             <Spinner
-                android:id="@+id/spinner_alarm_before"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"></Spinner>
+                android:layout_height="wrap_content"
+                android:id="@+id/dialog_edit_spinner_alarm_before"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="minutes before" />
+                android:text="minutes before"/>
         </LinearLayout>
 
     </LinearLayout>
@@ -245,7 +233,6 @@
         android:layout_height="1dp"
         android:background="@android:color/darker_gray" />
 
-
     <Spinner
         android:id="@+id/dialog_edit_spinner_alarm_frequency"
         android:layout_width="match_parent"
@@ -253,10 +240,35 @@
         android:background="@android:color/transparent"
         android:gravity="start|center_vertical" />
 
-
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="10"
+        android:showDividers="middle">
+
+        <Button
+            android:id="@+id/dialog_edit_alarm_cancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="5"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:text="Cancel"/>
+
+        <Button
+            android:id="@+id/dialog_edit_alarm_done"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="5"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:text="Done"/>
+    </LinearLayout>
 
 </LinearLayout>

@@ -113,6 +113,6 @@ public class MainActivity extends AppCompatActivity implements FocusFabDialog.On
 
     @Override
     public void onSelectedFocus(String location) {
-        mapFragment.refocus(location);
+        mapFragment.fabRefocus(location);
     }
 }

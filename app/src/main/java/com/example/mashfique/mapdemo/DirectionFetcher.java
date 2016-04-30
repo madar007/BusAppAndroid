@@ -9,6 +9,7 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
+import com.google.maps.android.geometry.Bounds;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,6 +48,7 @@ public class DirectionFetcher {
     private final String JSON_TEXT = "text";
     private final String LAT = "lat";
     private final String LNG = "lng";
+    private final String BOUNDS = "bounds";
 
     private String fromPlace_ID;
     private String toPlace_ID;
@@ -182,9 +184,29 @@ public class DirectionFetcher {
         boolean success = false;
         try {
             if (route != null) {
+                double lat;
+                double lng;
+
+                JSONObject jsonBound = jsonRoute.getJSONObject(BOUNDS);
+                lat = jsonBound.getJSONObject("northeast").getDouble(LAT);
+                lng = jsonBound.getJSONObject("northeast").getDouble(LNG);
+                LatLng northeastBound = new LatLng(lat, lng);
+
+                lat = jsonBound.getJSONObject("southwest").getDouble(LAT);
+                lng = jsonBound.getJSONObject("southwest").getDouble(LNG);
+                LatLng southwestBound = new LatLng(lat, lng);
+                route.setLatLngBounds(southwestBound, northeastBound);
+
                 JSONObject jsonLeg = jsonRoute.getJSONArray("legs").getJSONObject(0);
                 String startAddr = jsonLeg.getString(START_ADDR);
+                lat = jsonLeg.getJSONObject(START_LOCATION).getDouble(LAT);
+                lng = jsonLeg.getJSONObject(START_LOCATION).getDouble(LNG);
+                route.setStartLatLng(new LatLng(lat, lng));
+
                 String endAddr = jsonLeg.getString(END_ADDR);
+                lat = jsonLeg.getJSONObject(END_LOCATION).getDouble(LAT);
+                lng = jsonLeg.getJSONObject(END_LOCATION).getDouble(LNG);
+                route.setEndLatLng(new LatLng(lat, lng));
 //                String arrivalTime = jsonLeg.getJSONObject(ARRIVAL_TIME).getString(JSON_TEXT);
 //                String departureTime = jsonLeg.getJSONObject(DEPART_TIME).getString(JSON_TEXT);
                 String distance = jsonLeg.getJSONObject(DISTANCE).getString(JSON_TEXT);
@@ -256,7 +278,7 @@ public class DirectionFetcher {
         Step step = parseJsonWalking(jsonCurrentStep);
         if (step != null) {
             singleDetailedStep.add(step);
-            return  singleDetailedStep;
+            return singleDetailedStep;
         } else {
             return null;
         }

@@ -23,6 +23,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -42,7 +43,7 @@ public class AddAlarmFragment extends Fragment {
     private CheckBox[] days;
     private Button atTime;
     private Spinner beforeSpinner;
-    private Button frequency;
+    private Spinner frequencySpinner;
     private Alarm newAlarm;
     private OnNewAlarmCreationListener mListener;
 
@@ -81,14 +82,15 @@ public class AddAlarmFragment extends Fragment {
         initCheckboxes(view);
         alarmName = (EditText) view.findViewById(R.id.alarm_name_field);
         initBusStopsearch(view);
+        initFrequencySpinner(view);
         busStop = (AutoCompleteTextView) view.findViewById(R.id.alarm_bus_stop_search);
-        frequency = (Button) view.findViewById(R.id.button_alarm_frequency);
+        //frequencySpinner = (Button) view.findViewById(R.id.button_alarm_frequency);
 
     }
 
-    private void initBusStopsearch(View view) {
+    private void initBusStopsearch(View rootView) {
         initBusStopAdapter();
-        busStop = (AutoCompleteTextView) view.findViewById(R.id.alarm_bus_stop_search);
+        busStop = (AutoCompleteTextView) rootView.findViewById(R.id.alarm_bus_stop_search);
         busStop.setAdapter(busStopAdapter);
         busStop.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -106,26 +108,9 @@ public class AddAlarmFragment extends Fragment {
         Calendar calendar = Calendar.getInstance();
         final int hour = calendar.get(Calendar.HOUR_OF_DAY);
         final int minute = calendar.get(Calendar.MINUTE);
-        String badMinuteHack = Integer.toString(minute);
 
-        if (minute < 10) {
-            badMinuteHack = "0" + minute;
-        }
-
-        if (hour >= 12) {
-            if (hour == 12) {
-                atTime.setText("At " + 12 + ":" + badMinuteHack + "PM");
-            } else {
-                atTime.setText("At " + (hour - 12) + ":" + badMinuteHack + "PM");
-            }
-        } else {
-            if (hour == 0) {
-                atTime.setText("At " + 12 + ":" + badMinuteHack + "AM");
-            } else {
-                atTime.setText("At " + hour + ":" + badMinuteHack + "AM");
-            }
-
-        }
+        String currentTime = UnitsConverter.militaryTo12Hour(hour, minute);
+        atTime.setText("At " + currentTime);
 
         atTime.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -134,21 +119,10 @@ public class AddAlarmFragment extends Fragment {
                 timePicker = new TimePickerDialog(getContext(), new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        String period = "AM";
-                        if (hourOfDay >= 12) {
-                            if (hourOfDay > 12) {
-                                hourOfDay = hourOfDay - 12;
-                            }
-                            period = "PM";
-                        } else if (hourOfDay == 0) {
-                            hourOfDay = 12;
-                        }
-
-                        if (minute < 10) {
-                            atTime.setText("At " + hourOfDay + ":" + "0" + minute + period);
-                        } else {
-                            atTime.setText("At " + hourOfDay + ":" + minute + period);
-                        }
+                        String chosenTime = UnitsConverter.militaryTo12Hour(hourOfDay, minute);
+                        atTime.setText("At " + chosenTime);
+                        newAlarm.setAtHour(hourOfDay);
+                        newAlarm.setAtMin(minute);
                     }
                 }, hour, minute, false);
                 timePicker.setTitle("Select Time");
@@ -185,8 +159,19 @@ public class AddAlarmFragment extends Fragment {
 
     }
 
-    private void initFrequencyButton() {
-        frequency = (Button) getActivity().findViewById(R.id.button_alarm_frequency);
+    private void initFrequencySpinner(View rootView) {
+        frequencySpinner = (Spinner) rootView.findViewById(R.id.dialog_edit_spinner_alarm_frequency);
+        List<String> freqValues = new ArrayList<>();
+        freqValues.add("One-time alarm");
+        freqValues.add("Every week");
+        freqValues.add("Every 2 weeks");
+        freqValues.add("Every 3 weeks");
+
+        ArrayAdapter<String> spinnerValues = new ArrayAdapter<>(getActivity().getApplicationContext(),
+                R.layout.spinner_item_alarm, freqValues);
+
+        frequencySpinner.setAdapter(spinnerValues);
+        frequencySpinner.setSelection(0);
     }
 
     private void initCheckboxes(View rootView) {
@@ -215,16 +200,21 @@ public class AddAlarmFragment extends Fragment {
     }
 
     private void addAlarm() {
-        newAlarm.setAlarmName(alarmName.getText().toString());
-        newAlarm.setBusStop(busStop.getText().toString());
-        setAlarmDays();
-        newAlarm.setBeforeTime(beforeSpinner.getSelectedItem().toString());
-        newAlarm.setAtTime(atTime.getText().toString());
-        newAlarm.setFrequency(frequency.getText().toString());
+        if (busStop.getText().toString().matches("")) {
+            Toast.makeText(getContext(), "Please select a bus stop", Toast.LENGTH_SHORT).show();
+        } else {
+            newAlarm.setAlarmName(alarmName.getText().toString());
+            newAlarm.setBusStop(busStop.getText().toString());
+            setAlarmDays();
+            newAlarm.setBeforeTime(beforeSpinner.getSelectedItem().toString());
+            newAlarm.setAtTime(atTime.getText().toString());
+            newAlarm.setFrequency(frequencySpinner.getSelectedItem().toString());
+            newAlarm.turnOn();
 
-        mListener.onNewAlarmCreation(newAlarm);
-        toolbar.setTitle(activityToolbarTitle);
-        getActivity().getSupportFragmentManager().popBackStack();
+            mListener.onNewAlarmCreation(newAlarm);
+            toolbar.setTitle(activityToolbarTitle);
+            getActivity().getSupportFragmentManager().popBackStack();
+        }
     }
 
     private void setAlarmDays() {

@@ -1,9 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="50dp"
-    android:padding="10dp"
-    android:gravity="start|center"
-    android:textSize="15sp"
-    android:textColor="@android:color/black">
-</TextView>
+<com.daimajia.swipe.SwipeLayout
+    xmlns:swipe="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipe_alarm"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    swipe:leftEdgeSwipeOffset="0dp"
+    swipe:rightEdgeSwipeOffset="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/holo_red_dark"
+        android:tag="Bottom3"
+        android:weightSum="10">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="6"/>
+
+        <Button
+            android:id="@+id/button_alarm_delete"
+            android:layout_width="0dp"
+            android:layout_height="55dp"
+            android:layout_weight="4"
+            android:layout_gravity="center"
+            android:gravity="right|center"
+            android:textAlignment="center"
+            android:textColor="@android:color/black"
+            android:text="Delete" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/position"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/text_data"
+            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:textSize="15sp"
+            android:gravity="start|center"
+            android:tag="Hover"/>
+    </LinearLayout>
+</com.daimajia.swipe.SwipeLayout>
+
+<!--<TextView-->
+    <!--android:layout_width="fill_parent"-->
+    <!--android:layout_height="60dp"-->
+    <!--android:padding="10dp"-->
+    <!--android:gravity="start|center"-->
+    <!--android:textSize="15sp"-->
+    <!--android:textColor="@android:color/black">-->
+<!--</TextView>-->

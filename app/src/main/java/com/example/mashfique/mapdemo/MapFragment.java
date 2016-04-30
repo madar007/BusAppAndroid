@@ -27,6 +27,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -38,6 +39,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.xml.sax.InputSource;
@@ -50,6 +52,7 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 import java.util.Timer;
@@ -85,6 +88,7 @@ public class MapFragment extends Fragment
     private FloatingActionButton fab_direc_prev;
     private FloatingActionButton fab_direc_next;
     private FloatingActionButton fab_direc_stop;
+    private HashMap<String, Polyline> routePolyLines;
 
     public MapFragment() {
         // Required empty public constructor
@@ -133,6 +137,7 @@ public class MapFragment extends Fragment
         fab_direc_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                clearRoutePolyLines();
                 directionsAdapter.clear();
                 directionsAdapter.notifyDataSetChanged();
                 directionsSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
@@ -145,6 +150,13 @@ public class MapFragment extends Fragment
             }
         });
 
+    }
+
+    private void clearRoutePolyLines() {
+        for (Polyline polyline : routePolyLines.values()) {
+            polyline.remove();
+        }
+        routePolyLines.clear();
     }
 
     private void initMap(Bundle savedInstanceState) {
@@ -290,7 +302,6 @@ public class MapFragment extends Fragment
         fetcher.fetch(this);
         directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
         directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
         if (directionsStack == null) {
             directionsStack = new Stack<>();
         }
@@ -423,6 +434,7 @@ public class MapFragment extends Fragment
                 setupRoute(xmlhandler);
                 setupStops(xmlhandler);
                 placeBusMarkers();
+                redrawRoutes();
                 //  *********************** Take care of setting bounds :
                 LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
                 mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
@@ -433,15 +445,50 @@ public class MapFragment extends Fragment
         }
     }
 
+    private void redrawRoutes() {
+        if (routePolyLines != null && routePolyLines.size() > 0) {
+            HashMap<String, Polyline> redrawnPolylines = new HashMap<>();
+            for (String polyKey : routePolyLines.keySet()) {
+                PolylineOptions polylineOption  = new PolylineOptions();
+                polylineOption.addAll(routePolyLines.get(polyKey).getPoints());
+                polylineOption.color(Color.BLUE);
+                polylineOption.width(10);
+                polylineOption.geodesic(false);
+
+                Polyline polyline = mGoogleMap.addPolyline(polylineOption);
+                redrawnPolylines.put(polyline.getId(), polyline);
+            }
+            routePolyLines = redrawnPolylines;
+        }
+    }
+
     @Override
     public void processDirectionsResult(List<Route> results) {
         directionsAdapter.clear();
         if ((results != null) && (results.size() > 0)) {
             directionsAdapter.addAll(results.get(0).getListOfSteps());
+            drawRoute(results.get(0));
         } else {
             directionsAdapter.add(Step.getErrorStep());
+            directionsAdapter.notifyDataSetChanged();
         }
-        directionsAdapter.notifyDataSetChanged();
+    }
+
+    private void drawRoute(Route results) {
+        List<Step> steps = results.getListOfSteps();
+        if (routePolyLines == null) {
+            routePolyLines = new HashMap<>();
+        }
+
+        for (Step step : steps) {
+            PolylineOptions polylineOptions = step.getPolylineOptions();
+            polylineOptions.color(Color.BLUE);
+            polylineOptions.width(10);
+            polylineOptions.geodesic(false);
+            polylineOptions.zIndex(1.0f);
+            Polyline polyline = mGoogleMap.addPolyline(polylineOptions);
+            routePolyLines.put(polyline.getId(), polyline);
+        }
     }
 
     private void startAnimationTimer() {

@@ -14,10 +14,10 @@ import android.widget.Toast;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FabDialog extends DialogFragment {
+public class FocusFabDialog extends DialogFragment {
 
     private OnSelectedFocusListener mListener;
-    public FabDialog() {
+    public FocusFabDialog() {
         // Required empty public constructor
     }
 

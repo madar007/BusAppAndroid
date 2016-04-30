@@ -32,6 +32,7 @@ public class AlarmsActivity extends AppCompatActivity
         switch (menuItem) {
             case android.R.id.home:
                 if (backStackCount > 0) {
+                    toolbar.setTitle("Alarms");
                     getSupportFragmentManager().popBackStack();
                     return true;
                 } else {

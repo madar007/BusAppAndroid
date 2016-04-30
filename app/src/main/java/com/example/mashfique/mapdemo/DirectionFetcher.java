@@ -229,14 +229,17 @@ public class DirectionFetcher {
                     }
                 } else {
                     jsonDetailedSteps = jsonCurrentStep.getJSONArray(STEPS);
-                    detailedSteps = parseJsonDetailSteps(jsonDetailedSteps);
+                    if (jsonDetailedSteps.length() > 1) {
+                        detailedSteps = parseJsonDetailSteps(jsonDetailedSteps);
+                    } else {
+                        detailedSteps = parseJsonSingleDetailStep(jsonCurrentStep);
+                    }
                     if (detailedSteps != null) {
                         steps.addAll(detailedSteps);
                     } else {
                         successfulParse = false;
                     }
                 }
-
                 if (!successfulParse) {
                     steps = null;
                     return steps;
@@ -246,6 +249,17 @@ public class DirectionFetcher {
             Log.e(LOG_TAG, e.getMessage());
         }
         return steps;
+    }
+
+    private List<Step> parseJsonSingleDetailStep(JSONObject jsonCurrentStep) {
+        List<Step> singleDetailedStep = new ArrayList<>();
+        Step step = parseJsonWalking(jsonCurrentStep);
+        if (step != null) {
+            singleDetailedStep.add(step);
+            return  singleDetailedStep;
+        } else {
+            return null;
+        }
     }
 
     private List<Step> parseJsonDetailSteps(JSONArray jsonDetailedSteps) {
@@ -277,7 +291,6 @@ public class DirectionFetcher {
             end_latlng = new LatLng(jsonWalking.getJSONObject(END_LOCATION).getDouble(LAT),
                     jsonWalking.getJSONObject(END_LOCATION).getDouble(LNG));
             step.setEndLocation(end_latlng);
-            step.setInstructions(cleanHtmlDirections(jsonWalking.getString(INSTRUCTIONS)));
 
             String encodedPolyLine = jsonWalking.getJSONObject(POLYLINE).getString(POINTS);
             polylineOptions = new PolylineOptions();
@@ -292,6 +305,7 @@ public class DirectionFetcher {
             step.setStartLocation(start_latLng);
 
             step.setTravelMode(jsonWalking.getString(TRAVEL_MODE));
+            step.setInstructions(cleanHtmlDirections(jsonWalking.getString(INSTRUCTIONS)));
 
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage());

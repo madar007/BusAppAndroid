@@ -10,8 +10,8 @@
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp"
-        android:layout_marginTop="15dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
         android:background="@android:color/transparent"
         android:hint="Alarm name"
         android:inputType="text"
@@ -25,11 +25,11 @@
         android:layout_height="1dp"
         android:background="@android:color/darker_gray" />
 
-    <EditText
+    <AutoCompleteTextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp"
-        android:layout_marginTop="15dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
         android:background="@android:color/transparent"
         android:drawablePadding="3dp"
         android:hint="Bus stop"

@@ -3,6 +3,7 @@ package com.example.mashfique.mapdemo;
 
 import android.app.Activity;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
@@ -13,8 +14,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -34,7 +37,8 @@ public class AddAlarmFragment extends Fragment {
     private Toolbar toolbar;
     private String activityToolbarTitle;
     private EditText alarmName;
-    private EditText busStop;
+    private AutoCompleteTextView busStop;
+    private ArrayAdapter<String> busStopAdapter;
     private CheckBox[] days;
     private Button atTime;
     private Spinner beforeSpinner;
@@ -76,9 +80,25 @@ public class AddAlarmFragment extends Fragment {
         initBeforeSpinner(view);
         initCheckboxes(view);
         alarmName = (EditText) view.findViewById(R.id.alarm_name_field);
-        busStop = (EditText) view.findViewById(R.id.alarm_bus_stop_search);
+        initBusStopsearch(view);
+        busStop = (AutoCompleteTextView) view.findViewById(R.id.alarm_bus_stop_search);
         frequency = (Button) view.findViewById(R.id.button_alarm_frequency);
 
+    }
+
+    private void initBusStopsearch(View view) {
+        initBusStopAdapter();
+        busStop = (AutoCompleteTextView) view.findViewById(R.id.alarm_bus_stop_search);
+        busStop.setAdapter(busStopAdapter);
+        busStop.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                InputMethodManager inputMethodManager = (InputMethodManager)
+                        getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+            }
+        });
     }
 
     private void initAtTimeButton(View rootView) {
@@ -229,4 +249,65 @@ public class AddAlarmFragment extends Fragment {
                     activity.getClass().getSimpleName() + " must implement OnNewAlarmCreationListener!");
         }
     }
+
+    private void initBusStopAdapter() {
+        List<String> universityCirculator = new ArrayList<>();
+        universityCirculator.add("Northrop");
+        universityCirculator.add("Willey Hall");
+        universityCirculator.add("Carlson School of Management");
+        universityCirculator.add("Mondale Hall");
+        universityCirculator.add("Sanford Hall");
+        universityCirculator.add("University Ave. @ 15th Ave.");
+        universityCirculator.add("University Ave. @ Rec Center");
+        universityCirculator.add("McNamara Alumni Center");
+
+        List<String> fourthSt = new ArrayList<>();
+        fourthSt.add("Coffman");
+        fourthSt.add("Oak Street @ University Ave.");
+        fourthSt.add("Ridder Arena");
+        fourthSt.add("4th Street @ 15th Ave");
+        fourthSt.add("10th Ave. @ University Ave");
+        fourthSt.add("19th Avenue Ramp");
+        fourthSt.add("Blegen Hall");
+
+        List<String> stadiumCirculator = new ArrayList<>();
+        stadiumCirculator.add("Masonic Memorial Building");
+        stadiumCirculator.add("Clinic & Surgery Center");
+        stadiumCirculator.add("Thompson Center");
+        stadiumCirculator.add("Center for Magnetic Resonance Research");
+
+        List<String> stPaulCirculator = new ArrayList<>();
+        stPaulCirculator.add("St. Paul Student Center");
+        stPaulCirculator.add("Dudley & Cleveland Ave.");
+        stPaulCirculator.add("Coffman St. & Folwell Ave.");
+        stPaulCirculator.add("Larpenteur Ave. & Coffman St.");
+        stPaulCirculator.add("Hodson Hall & Folwell Ave.");
+        stPaulCirculator.add("Gortner & Dudley Ave.");
+        stPaulCirculator.add("Buford & Gortner Ave.");
+        stPaulCirculator.add("Veterinary Medical Center");
+        stPaulCirculator.add("Transitway & Commonwealth");
+        stPaulCirculator.add("Como Ave. & Raleigh St.");
+        stPaulCirculator.add("Como & Clevland Ave.");
+        stPaulCirculator.add("Eckles & Carter Ave.");
+
+        List<String> connector = new ArrayList<>();
+        connector.add("TransitWay @ 23rd Ave.");
+        connector.add("State Fairgrounds Lot S-108");
+        connector.add("St. Paul Student Center");
+        connector.add("Pleasant St. @ Jones-Eddy Circle");
+        connector.add("Bruininks Hall");
+
+        List<String> allStops = new ArrayList<>();
+        allStops.addAll(universityCirculator);
+        allStops.addAll(fourthSt);
+        allStops.addAll(stadiumCirculator);
+        allStops.addAll(stPaulCirculator);
+        allStops.addAll(connector);
+
+        busStopAdapter = new ArrayAdapter<String>(getContext(), R.layout.bus_stop_list_item, allStops);
+    }
+
+
+
+
 }

@@ -17,10 +17,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
-import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements FabDialog.OnSelectedFocusListener{
+public class MainActivity extends AppCompatActivity implements FocusFabDialog.OnSelectedFocusListener{
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mDrawerNav;
@@ -91,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements FabDialog.OnSelec
     }
 
     private void initFab() {
-        final DialogFragment newFragment = new FabDialog();
+        final DialogFragment newFragment = new FocusFabDialog();
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override

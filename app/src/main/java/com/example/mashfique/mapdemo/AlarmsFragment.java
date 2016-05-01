@@ -8,6 +8,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,15 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,10 +39,10 @@ import com.daimajia.swipe.adapters.BaseSwipeAdapter;
 
 public class AlarmsFragment extends Fragment {
 
+    private String LOG_TAG = AlarmsFragment.class.getSimpleName();
     private static AlarmSwipeAdapter mAlarmsAdapter;
     private FloatingActionButton fab;
     private ListView alarms;
-
     private static Alarm editedAlarm;
 
     @Override
@@ -71,12 +81,17 @@ public class AlarmsFragment extends Fragment {
     }
 
     private void initListAlarms(View view) {
+
+        List<Alarm> savedAlarms = readSavedAlarms();
         if (mAlarmsAdapter == null) {
-            mAlarmsAdapter = new AlarmSwipeAdapter(getContext(), new ArrayList<Alarm>());
+            if (savedAlarms != null && savedAlarms.size() > 0) {
+                mAlarmsAdapter = new AlarmSwipeAdapter(getContext(), savedAlarms);
+            } else {
+                mAlarmsAdapter = new AlarmSwipeAdapter(getContext(), new ArrayList<Alarm>());
+            }
         }
         alarms = (ListView) view.findViewById(R.id.listview_alarm);
         alarms.setAdapter(mAlarmsAdapter);
-
         alarms.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
@@ -87,6 +102,45 @@ public class AlarmsFragment extends Fragment {
                 return false;
             }
         });
+    }
+
+    private List<Alarm> readSavedAlarms() {
+        ArrayList<Alarm> savedAlarms;
+        FileInputStream inputStream;
+        final String SAVEFILE = "alarms";
+        try {
+            savedAlarms = new ArrayList<>();
+            inputStream = new FileInputStream(SAVEFILE);
+            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+            while (true) {
+                Alarm currentAlarm = (Alarm) objectInputStream.readObject();
+                savedAlarms.add(currentAlarm);
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            Log.e(LOG_TAG, "Error reading in alarms. Check to see if SAVEFILE exists");
+            savedAlarms = null;
+        }
+        return savedAlarms;
+    }
+
+    private void saveAlarms() {
+        final String SAVEFILE = "alarms";
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(SAVEFILE);
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            for (int i = 0; i < mAlarmsAdapter.getCount(); i++) {
+                Alarm currentAlarm = (Alarm) mAlarmsAdapter.getItem(i);
+                objectOutputStream.writeObject(currentAlarm);
+            }
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Error saving alarms");
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        saveAlarms();
+        super.onDestroy();
     }
 
     public static class AlarmSwipeAdapter extends BaseSwipeAdapter {

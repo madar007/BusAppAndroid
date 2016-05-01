@@ -1,9 +1,11 @@
 package com.example.mashfique.mapdemo;
 
+import java.io.Serializable;
+
 /**
  * Created by Ragnarok on 4/14/2016.
  */
-public class Alarm {
+public class Alarm implements Serializable {
 
     private String alarmName;
     private String busStop;

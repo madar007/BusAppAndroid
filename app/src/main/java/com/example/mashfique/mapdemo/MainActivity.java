@@ -15,6 +15,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -39,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements FocusFabDialog.On
 
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        ImageView test = (ImageView) findViewById(R.id.offline_image);
+        ImageView offlineImage = (ImageView) findViewById(R.id.offline_image);
         if (mWifi.isConnected()) {
             if (savedInstanceState == null) {
                 mapFragment = new MapFragment();
@@ -48,7 +49,10 @@ public class MainActivity extends AppCompatActivity implements FocusFabDialog.On
             }
         } else {
             mDrawerLayout.openDrawer(Gravity.LEFT);
-            test.setVisibility(View.VISIBLE);
+            offlineImage.setVisibility(View.VISIBLE);
+            fab.hide();
+            ((AutoCompleteTextView) findViewById(R.id.autocomplete_from_main)).setVisibility(View.INVISIBLE);
+            ((AutoCompleteTextView) findViewById(R.id.autocomplete_to_main)).setVisibility(View.INVISIBLE);
         }
     }
 

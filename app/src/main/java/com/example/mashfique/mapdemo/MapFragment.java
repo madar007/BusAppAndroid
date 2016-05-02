@@ -3,6 +3,9 @@ package com.example.mashfique.mapdemo;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -92,7 +95,7 @@ public class MapFragment extends Fragment
     private FloatingActionButton fab_direc_stop;
     private HashMap<String, Polyline> routePolyLines;
     private Marker[] startEndMarker;
-    private Marker searchMarker;
+    private Marker queryMarker;
 
     public MapFragment() {
         // Required empty public constructor
@@ -126,6 +129,13 @@ public class MapFragment extends Fragment
                 if (!directionsStack.isEmpty()) {
                     Step previousStep = directionsStack.pop();
                     directionsAdapter.insert(previousStep, 0);
+                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(previousStep.getEndLocation(), 17));
+                    if (queryMarker != null) {
+                        queryMarker.remove();
+                    }
+                    queryMarker = mGoogleMap.addMarker(new MarkerOptions()
+                            .position(previousStep.getEndLocation())
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
                     directionsAdapter.notifyDataSetChanged();
                 }
             }
@@ -138,6 +148,13 @@ public class MapFragment extends Fragment
                     Step currentStep = directionsAdapter.getItem(0);
                     directionsStack.push(currentStep);
                     directionsAdapter.remove(currentStep);
+                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentStep.getEndLocation(), 17f));
+                    if (queryMarker != null) {
+                        queryMarker.remove();
+                    }
+                    queryMarker = mGoogleMap.addMarker(new MarkerOptions()
+                            .position(currentStep.getEndLocation())
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
                     directionsAdapter.notifyDataSetChanged();
                 }
             }
@@ -147,6 +164,10 @@ public class MapFragment extends Fragment
             @Override
             public void onClick(View v) {
                 clearRouteDrawings();
+                if (queryMarker != null) {
+                    queryMarker.remove();
+                }
+                queryMarker = null;
                 directionsAdapter.clear();
                 directionsAdapter.notifyDataSetChanged();
                 directionsSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
@@ -243,11 +264,12 @@ public class MapFragment extends Fragment
                         InputMethodManager.HIDE_NOT_ALWAYS);
 
                 if (!toSearch.getText().toString().matches("")) {
-                    searchMarker.remove();
+                    queryMarker.remove();
                     showDirections(from.getPlaceID(), to.getPlaceID());
                 } else {
                     focusOnSearch(from.getPlaceID());
                 }
+                fromSearch.clearFocus();
             }
         });
 
@@ -261,11 +283,12 @@ public class MapFragment extends Fragment
                         InputMethodManager.HIDE_NOT_ALWAYS);
 
                 if (!fromSearch.getText().toString().matches("")) {
-                    searchMarker.remove();
+                    queryMarker.remove();
                     showDirections(from.getPlaceID(), to.getPlaceID());
                 } else {
                     focusOnSearch(to.getPlaceID());
                 }
+                toSearch.clearFocus();
             }
         });
 
@@ -317,8 +340,8 @@ public class MapFragment extends Fragment
     }
 
     private void focusOnSearch(String placeID) {
-        if (searchMarker != null) {
-            searchMarker.remove();
+        if (queryMarker != null) {
+            queryMarker.remove();
         }
 
         Places.GeoDataApi.getPlaceById(mGoogleApiClient, placeID)
@@ -329,7 +352,7 @@ public class MapFragment extends Fragment
                             Place place = places.get(0);
                             LatLng placeLatLng = place.getLatLng();
                             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 18));
-                            searchMarker = mGoogleMap.addMarker(new MarkerOptions().position(placeLatLng));
+                            queryMarker = mGoogleMap.addMarker(new MarkerOptions().position(placeLatLng));
                         }
                         places.release();
                     }
@@ -339,6 +362,7 @@ public class MapFragment extends Fragment
     public void fabRefocus(String location) {
         switch (location) {
             case "Current Location":
+                focusOnCurrentLocation();
                 break;
             case "East Bank":
                 mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.974825, -93.229518), 15f));
@@ -350,6 +374,47 @@ public class MapFragment extends Fragment
                 mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.984442, -93.1836874), 15f));
                 break;
         }
+    }
+
+    public void focusOnCurrentLocation() {
+        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        LocationListener locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                double lat = location.getLatitude();
+                double lng = location.getLongitude();
+                LatLng currentLocation = new LatLng(lat, lng);
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f));
+                if (queryMarker != null) {
+                    queryMarker.remove();
+                }
+                queryMarker = mGoogleMap.addMarker(new MarkerOptions()
+                        .position(currentLocation));
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        Location lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if (lastLocation == null) {
+            Toast.makeText(getContext(), "Turn on your phone's location services", Toast.LENGTH_SHORT).show();
+        } else {
+            locationListener.onLocationChanged(lastLocation);
+        }
+        locationManager.removeUpdates(locationListener);
     }
 
     @Override
@@ -430,7 +495,7 @@ public class MapFragment extends Fragment
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-        mGoogleMap.setMyLocationEnabled(true);
+        mGoogleMap.setMyLocationEnabled(false);
         mGoogleMap.getUiSettings().setMyLocationButtonEnabled(false);
         mGoogleMap.getUiSettings().setCompassEnabled(true);
         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");

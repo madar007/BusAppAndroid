@@ -170,6 +170,7 @@ public class MapFragment extends Fragment
                 queryMarker = null;
                 directionsAdapter.clear();
                 directionsAdapter.notifyDataSetChanged();
+                directionsSheet.setHideable(true);
                 directionsSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
                 fab_direc_next.hide();
                 fab_direc_stop.hide();
@@ -440,6 +441,7 @@ public class MapFragment extends Fragment
         fab_direc_prev.show();
         fab_direc_next.show();
         fab_direc_stop.show();
+        directionsSheet.setHideable(false);
     }
 
     private void drawRoute(Route results) {

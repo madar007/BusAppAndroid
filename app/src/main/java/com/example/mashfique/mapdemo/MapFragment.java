@@ -129,7 +129,7 @@ public class MapFragment extends Fragment
                 if (!directionsStack.isEmpty()) {
                     Step previousStep = directionsStack.pop();
                     directionsAdapter.insert(previousStep, 0);
-                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(previousStep.getEndLocation(), 17));
+                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(previousStep.getEndLocation(), 17), 1500, null);
                     if (queryMarker != null) {
                         queryMarker.remove();
                     }
@@ -148,7 +148,7 @@ public class MapFragment extends Fragment
                     Step currentStep = directionsAdapter.getItem(0);
                     directionsStack.push(currentStep);
                     directionsAdapter.remove(currentStep);
-                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentStep.getEndLocation(), 17f));
+                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentStep.getEndLocation(), 17f), 1500, null);
                     if (queryMarker != null) {
                         queryMarker.remove();
                     }
@@ -351,7 +351,7 @@ public class MapFragment extends Fragment
                         if (places.getStatus().isSuccess() && places.getCount() > 0) {
                             Place place = places.get(0);
                             LatLng placeLatLng = place.getLatLng();
-                            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 18));
+                            mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 18), 1500, null);
                             queryMarker = mGoogleMap.addMarker(new MarkerOptions().position(placeLatLng));
                         }
                         places.release();
@@ -365,13 +365,13 @@ public class MapFragment extends Fragment
                 focusOnCurrentLocation();
                 break;
             case "East Bank":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.974825, -93.229518), 15f));
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.974825, -93.229518), 15f), 1500, null);
                 break;
             case "West Bank":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.971612, -93.241614), 16f));
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.971612, -93.241614), 16f), 1500, null);
                 break;
             case "St. Paul":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.984442, -93.1836874), 15f));
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.984442, -93.1836874), 15f), 1500, null);
                 break;
         }
     }
@@ -464,7 +464,7 @@ public class MapFragment extends Fragment
 
         startEndMarker[1] = mGoogleMap.addMarker(new MarkerOptions().position(results.getEndLatLng())
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(results.getLatLngBound(), 10));
+        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(results.getLatLngBound(), 10), 1500, null);
     }
 
     private void redrawRoutes() {

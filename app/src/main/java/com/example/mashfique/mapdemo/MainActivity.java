@@ -80,6 +80,9 @@ public class MainActivity extends AppCompatActivity implements FocusFabDialog.On
                     case R.id.nav_favorites:
                     case R.id.nav_offline_maps:
                     case R.id.nav_timetables:
+                        Intent timeTableIntent = new Intent(getApplicationContext(), TimeTableActivity.class);
+                        startActivity(timeTableIntent);
+                        break;
                     case R.id.nav_settings:
                     case R.id.nav_help_feedback:
                     default:

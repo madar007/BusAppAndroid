@@ -15,5 +15,6 @@
     <string name="title_activity_alarms">AlarmsActivity</string>
     <string name="hello_blank_fragment">Test for fab</string>
     <string name="browser_api_key">AIzaSyA29AoYe_6eR-QPHHqnJRX5SSbwbRKSPK8</string>
+    <string name="title_activity_time_table">TimeTableActivity</string>
 
 </resources>

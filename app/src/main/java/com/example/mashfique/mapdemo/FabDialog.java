@@ -1,6 +1,7 @@
 package com.example.mashfique.mapdemo;
 
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -15,7 +16,7 @@ import android.widget.Toast;
  */
 public class FabDialog extends DialogFragment {
 
-
+    private OnSelectedFocusListener mListener;
     public FabDialog() {
         // Required empty public constructor
     }
@@ -28,12 +29,27 @@ public class FabDialog extends DialogFragment {
                 .setItems(fabOptions, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String text = "You picked: ";
-                        text = text.concat(fabOptions[which]);
-                        Toast confirmSelect = Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT);
-                        confirmSelect.show();
+                        setMapFocus(fabOptions[which]);
                     }
                 });
         return builder.create();
+    }
+
+    public interface OnSelectedFocusListener {
+        void onSelectedFocus(String location);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnSelectedFocusListener) activity;
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setMapFocus(String location) {
+        mListener.onSelectedFocus(location);
     }
 }

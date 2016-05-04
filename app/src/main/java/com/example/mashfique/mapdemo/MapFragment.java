@@ -5,28 +5,28 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -61,6 +61,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -75,17 +76,18 @@ public class MapFragment extends Fragment
 
     private MapView mMapView;
     private static GoogleMap mGoogleMap;
-    private TabLayout mTabLayout;
     private Timer timer;
     private TimerTask timerMarkerTask;
     private Handler animationHandler;
+
+    private Toolbar toolbar;
     private AutoCompleteTextView fromSearch;
     private AutoCompleteTextView toSearch;
     private GooglePlacesAutocompleteAdapter mPlacesAdapter;
-    private Toolbar toolbar;
+    private TabLayout mTabLayout;
 
     private HashMap<String, Bus> busesMap = new HashMap<String, Bus>();      // Will contain buses for a specific route
-    private HashMap<String, Marker> busMarkerMap =  new HashMap<String, Marker>();
+    private HashMap<String, Marker> busMarkerMap = new HashMap<String, Marker>();
     int tabPosition = 0;
 
     private GooglePlacesPrediction from;
@@ -93,6 +95,10 @@ public class MapFragment extends Fragment
 
     private BottomSheetBehavior directionsSheet;
     private ArrayAdapter<Step> directionsAdapter;
+    private Stack<Step> directionsStack;
+    private FloatingActionButton fab_direc_prev;
+    private FloatingActionButton fab_direc_next;
+    private FloatingActionButton fab_direc_stop;
 
     private String favText;
 
@@ -103,28 +109,64 @@ public class MapFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         favText = getArguments().getString("favText");
-        initTabs();
-        initBottomSheet();
         animationHandler = new Handler();
         toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
-
+        initTabs();
+        initBottomSheet();
+        initDirectionFabs();
+        initMap(savedInstanceState);
+        initSearches();
         super.onCreate(savedInstanceState);
 
     }
 
+    private void initDirectionFabs() {
+        fab_direc_prev = (FloatingActionButton) getActivity().findViewById(R.id.fab_prev_direction);
+        fab_direc_next = (FloatingActionButton) getActivity().findViewById(R.id.fab_next_direction);
+        fab_direc_stop = (FloatingActionButton) getActivity().findViewById(R.id.fab_stop_direction);
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+        fab_direc_prev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!directionsStack.isEmpty()) {
+                    Step previousStep = directionsStack.pop();
+                    directionsAdapter.insert(previousStep, 0);
+                    directionsAdapter.notifyDataSetChanged();
+                }
+            }
+        });
 
-        View rootView = inflater.inflate(R.layout.activity_main, container, false);
-        initMap(rootView, savedInstanceState);
-        initSearches(rootView);
-        return rootView;
+        fab_direc_next.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (directionsAdapter.getCount() != 1) {
+                    Step currentStep = directionsAdapter.getItem(0);
+                    directionsStack.push(currentStep);
+                    directionsAdapter.remove(currentStep);
+                    directionsAdapter.notifyDataSetChanged();
+                }
+            }
+        });
+
+        fab_direc_stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                directionsAdapter.clear();
+                directionsAdapter.notifyDataSetChanged();
+                directionsSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
+                fab_direc_next.hide();
+                fab_direc_stop.hide();
+                fab_direc_prev.hide();
+                directionsStack.clear();
+                toSearch.setText("");
+                fromSearch.setText("");
+            }
+        });
+
     }
 
-    private void initMap(View view, Bundle savedInstanceState) {
-        mMapView = (MapView) view.findViewById(R.id.mapView);
+    private void initMap(Bundle savedInstanceState) {
+        mMapView = (MapView) getActivity().findViewById(R.id.mapView);
         mMapView.onCreate(savedInstanceState);
         mMapView.onResume();
         try {
@@ -138,13 +180,41 @@ public class MapFragment extends Fragment
     }
 
     private void initBottomSheet() {
-        ListView bottomSheetView = (ListView) getActivity().findViewById(R.id.bottomsheet_main);
+        final ListView bottomSheetView = (ListView) getActivity().findViewById(R.id.bottomsheet_main);
         directionsAdapter = new ArrayAdapter<>(getContext(), R.layout.directions_list_item);
         bottomSheetView.setAdapter(directionsAdapter);
         directionsSheet = BottomSheetBehavior.from(bottomSheetView);
+        directionsSheet.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(View bottomSheet, int newState) {
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        fab_direc_prev.hide();
+                        fab_direc_stop.hide();
+                        fab_direc_next.hide();
+                        break;
+                    case BottomSheetBehavior.STATE_DRAGGING:
+                        if (!fab_direc_next.isShown()) {
+                            fab_direc_next.show();
+                            fab_direc_prev.show();
+                            fab_direc_stop.show();
+                        }
+                        break;
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        bottomSheetView.setSelection(0);
+                        break;
+                }
+            }
+
+            @Override
+            public void onSlide(View bottomSheet, float slideOffset) {
+
+            }
+        });
     }
 
-    private void initSearches(View view) {
+    private void initSearches() {
         final InputMethodManager inputMethodManager = (InputMethodManager)
                 getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
 
@@ -279,11 +349,55 @@ public class MapFragment extends Fragment
         });
     }
 
+
+    public void refocus(String location) {
+        switch (location) {
+            case "Current Location":
+                break;
+            case "East Bank":
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.974825, -93.229518), 15f));
+                break;
+            case "West Bank":
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.971612, -93.241614), 16f));
+                break;
+            case "St. Paul":
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.984442, -93.1836874), 15f));
+                break;
+        }
+    }
+
+    private void placeBusMarkers() {
+        // ************************** Fake Buses:
+        Marker bus1 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.976543, -93.2263679)).title("This is bus1")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 305.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
+
+        Marker bus2 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.975195, -93.245857)).title("This is bus2")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 180.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
+
+        Marker bus3 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.971342, -93.247091)).title("This is bus3")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 70.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
         mGoogleMap = googleMap;
+        mGoogleMap.setMyLocationEnabled(true);
+        mGoogleMap.getUiSettings().setMyLocationButtonEnabled(false);
+        mGoogleMap.getUiSettings().setCompassEnabled(true);
         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
         startAnimationTimer();      // take care of the buses
 
@@ -294,7 +408,7 @@ public class MapFragment extends Fragment
             // Show rationale and request permission.
         }
         View btnMyLocation = ((View) mMapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100,100); // size of button in dp
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100, 100); // size of button in dp
         //params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
         params.addRule(RelativeLayout.ABOVE, RelativeLayout.TRUE);
         params.setMargins(20, 1000, 0, 200);
@@ -464,7 +578,7 @@ public class MapFragment extends Fragment
     @Override
     public void processDirectionsResult(List<Route> results) {
         directionsAdapter.clear();
-        if (results.size() > 0) {
+        if ((results != null) && (results.size() > 0)) {
             directionsAdapter.addAll(results.get(0).getListOfSteps());
         } else {
             directionsAdapter.add(Step.getErrorStep());
@@ -531,6 +645,12 @@ public class MapFragment extends Fragment
         directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
         try {
             directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            if (directionsStack == null) {
+                directionsStack = new Stack<>();
+            }
+            fab_direc_prev.show();
+            fab_direc_next.show();
+            fab_direc_stop.show();
         }
         catch(Exception e){
 

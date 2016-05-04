@@ -6,19 +6,19 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 
-public class AlarmsActivity extends AppCompatActivity {
+public class AlarmsActivity extends AppCompatActivity
+    implements AddAlarmFragment.OnNewAlarmCreationListener{
 
     private Toolbar toolbar;
-
+    private static AlarmsFragment alarmsFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarms);
-
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction().add(R.id.container_alarm_activity, new AlarmsFragment()).commit();
+            alarmsFragment = new AlarmsFragment();
+            getSupportFragmentManager().beginTransaction().add(R.id.container_alarm_activity, alarmsFragment).commit();
         }
-
 
         toolbar = (Toolbar) findViewById(R.id.toolbar_alarm);
         toolbar.setTitle("Alarms");
@@ -42,5 +42,10 @@ public class AlarmsActivity extends AppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onNewAlarmCreation(Alarm newAlarm) {
+        alarmsFragment.addAlarm(newAlarm);
     }
 }

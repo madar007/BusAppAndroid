@@ -102,13 +102,17 @@ public class MapFragment extends Fragment
 
     private String favText;
 
+    String RouteData[] = new String[5]; // useful for temporary caching- should probably change later
+    String[] routeNames = {"4thst", "connector", "university", "stadium", "stpaul"};
+    int count = 0;
+
     public MapFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        favText = getArguments().getString("favText");
+//        favText = getArguments().getString("favText");
         animationHandler = new Handler();
         toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
         initTabs();
@@ -116,10 +120,16 @@ public class MapFragment extends Fragment
         initDirectionFabs();
         initMap(savedInstanceState);
         initSearches();
+        // Load routes for (temporary) caching:
+        loadAllBusRoutes();
         super.onCreate(savedInstanceState);
 
     }
-
+    void loadAllBusRoutes() {
+        for (int i = 0; i < 5; i++) {
+            new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", routeNames[i]);
+        }
+    }
     private void initDirectionFabs() {
         fab_direc_prev = (FloatingActionButton) getActivity().findViewById(R.id.fab_prev_direction);
         fab_direc_next = (FloatingActionButton) getActivity().findViewById(R.id.fab_next_direction);
@@ -289,12 +299,20 @@ public class MapFragment extends Fragment
         mTabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                // Check if bus data actually loaded - should change implementation later
+                for (int i = 0; i < 5; i++) {
+                    if (RouteData[i].length() == 0) {
+                        loadAllBusRoutes();
+                        break;
+                    }
+                }
                 int tabPos = tab.getPosition();
                 tabPosition = tabPos;       // Set member variable for tab position (for using outside this method)
+                drawRouteOnTabSelection(tabPosition);
                 switch (tabPos) {
                     case 0:
                         // Fetch route
-                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
+                        //new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
                         // Fetch buses
                         long epochTime = System.currentTimeMillis() / 1000L;
                         String epochTimeStr = Long.toString(epochTime);
@@ -302,7 +320,7 @@ public class MapFragment extends Fragment
                         break;
                     case 1:
                         // Fetch route
-                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "connector");
+                        //new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "connector");
                         // Fetch buses
                         epochTime = System.currentTimeMillis() / 1000L;
                         epochTimeStr = Long.toString(epochTime);
@@ -310,7 +328,7 @@ public class MapFragment extends Fragment
                         break;
                     case 2:
                         // Fetch route
-                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "university");
+                        //new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "university");
                         // Fetch buses
                         epochTime = System.currentTimeMillis() / 1000L;
                         epochTimeStr = Long.toString(epochTime);
@@ -318,7 +336,7 @@ public class MapFragment extends Fragment
                         break;
                     case 3:
                         // Fetch route
-                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "stadium");
+                        //new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "stadium");
                         // Fetch buses
                         epochTime = System.currentTimeMillis() / 1000L;
                         epochTimeStr = Long.toString(epochTime);
@@ -326,7 +344,7 @@ public class MapFragment extends Fragment
                         break;
                     case 4:
                         // Fetch route
-                        new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "stpaul");
+                        //new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "stpaul");
                         // Fetch buses
                         epochTime = System.currentTimeMillis() / 1000L;
                         epochTimeStr = Long.toString(epochTime);
@@ -399,6 +417,8 @@ public class MapFragment extends Fragment
         mGoogleMap.getUiSettings().setMyLocationButtonEnabled(false);
         mGoogleMap.getUiSettings().setCompassEnabled(true);
         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
+
+        drawRouteOnTabSelection(tabPosition);
         startAnimationTimer();      // take care of the buses
 
         if (ContextCompat.checkSelfPermission(mMapView.getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
@@ -477,23 +497,48 @@ public class MapFragment extends Fragment
         });
     }
 
+    void drawRouteOnTabSelection(int tab) {
+        try {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser saxParser = factory.newSAXParser();
+            XMLParser xmlhandler = new XMLParser();
+            saxParser.parse(new InputSource(new StringReader(RouteData[tab])), xmlhandler);
+
+            mGoogleMap.clear();
+            setupRoute(xmlhandler);
+            setupStops(xmlhandler);
+
+            //  *********************** Take care of setting bounds :
+            LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
+            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void processBusRouteResults(String results) {
         if (results != null) {
             // ************************* Parse route and corresponding stops from xml
             try {
-                SAXParserFactory factory = SAXParserFactory.newInstance();
-                SAXParser saxParser = factory.newSAXParser();
-                XMLParser xmlhandler = new XMLParser();
-                saxParser.parse(new InputSource(new StringReader(results)), xmlhandler);
+                if (count < 5) {
+                    RouteData[count] = results;
+                }
+                count++;
+                if (count == 1) {       // special case- need to fix with cache implementation
+                    SAXParserFactory factory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = factory.newSAXParser();
+                    XMLParser xmlhandler = new XMLParser();
+                    saxParser.parse(new InputSource(new StringReader(results)), xmlhandler);
 
-                mGoogleMap.clear();
-                setupRoute(xmlhandler);
-                setupStops(xmlhandler);
+                    mGoogleMap.clear();
+                    setupRoute(xmlhandler);
+                    setupStops(xmlhandler);
 
-                //  *********************** Take care of setting bounds :
-                LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
+                    //  *********************** Take care of setting bounds :
+                    LatLngBounds boundsForRoute = xmlhandler.getBoundsForRoute();
+                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsForRoute, 900, 600, 2));
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();

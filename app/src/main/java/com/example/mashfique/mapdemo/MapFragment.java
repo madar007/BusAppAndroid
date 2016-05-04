@@ -26,10 +26,16 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.PlaceDetectionApi;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -88,12 +94,15 @@ public class MapFragment extends Fragment
     private BottomSheetBehavior directionsSheet;
     private ArrayAdapter<Step> directionsAdapter;
 
+    private String favText;
+
     public MapFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        favText = getArguments().getString("favText");
         initTabs();
         initBottomSheet();
         animationHandler = new Handler();
@@ -143,10 +152,14 @@ public class MapFragment extends Fragment
         toSearch = (AutoCompleteTextView) toolbar.getChildAt(0).findViewById(R.id.autocomplete_to_main);
         mPlacesAdapter = new GooglePlacesAutocompleteAdapter(getContext(), R.layout.autocomplete_list_item);
 
+        Log.d("check", "Did you even get here?");
+
+
         fromSearch.setAdapter(mPlacesAdapter);
         fromSearch.setThreshold(2);
         toSearch.setAdapter(mPlacesAdapter);
         toSearch.setThreshold(2);
+
 
         fromSearch.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -158,7 +171,9 @@ public class MapFragment extends Fragment
                         InputMethodManager.HIDE_NOT_ALWAYS);
 
                 if (!toSearch.getText().toString().matches("")) {
-                    showDirections(from.getPlaceID(), to.getPlaceID());
+                    String m = from.getPlaceID();
+                    //showDirections(from.getPlaceID(), to.getPlaceID());
+                    showDirections("ChIJWzc6sRcts1IRBK-Dyxa2BGw", "ChIJi2l8AD4ts1IR6hQ3FDu_3Qk");
                 }
 
             }
@@ -174,10 +189,23 @@ public class MapFragment extends Fragment
                         InputMethodManager.HIDE_NOT_ALWAYS);
 
                 if (!fromSearch.getText().toString().matches("")) {
-                    showDirections(from.getPlaceID(), to.getPlaceID());
+                    String m = from.getPlaceID();
+                    //showDirections(from.getPlaceID(), to.getPlaceID());
+                    showDirections("ChIJWzc6sRcts1IRBK-Dyxa2BGw", "ChIJi2l8AD4ts1IR6hQ3FDu_3Qk");
                 }
             }
         });
+        if(favText != null ){
+            //to = mPlacesAdapter.autocomplete(favText).get(0);
+            toSearch.setText(favText);
+            fromSearch.setText("Current Location");
+
+
+            if (!toSearch.getText().toString().matches("")) {
+                showDirections("ChIJWzc6sRcts1IRBK-Dyxa2BGw","ChIJi2l8AD4ts1IR6hQ3FDu_3Qk");
+            }
+        }
+
 
     }
 
@@ -501,7 +529,12 @@ public class MapFragment extends Fragment
         DirectionFetcher fetcher = new DirectionFetcher(fromPlace_ID, toPlace_ID);
         fetcher.fetch(this);
         directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
-        directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        try {
+            directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        }
+        catch(Exception e){
+
+        }
     }
 
     /* This function will setup route and corresponding stops for a specific route */

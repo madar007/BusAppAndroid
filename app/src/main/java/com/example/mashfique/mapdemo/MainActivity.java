@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private FloatingActionButton fab;
+    String favorite = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +34,14 @@ public class MainActivity extends AppCompatActivity {
         initDrawer();
         initFab();
 
+        Intent intent = getIntent();
+        favorite = intent.getStringExtra("favorite");
+
+        Bundle bundle = new Bundle();
+        bundle.putString("favText", favorite);
+// set Fragmentclass Arguments
+        MapFragment fragobj = new MapFragment();
+        fragobj.setArguments(bundle);
 
 //        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 //        NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
@@ -40,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
 //        if (mWifi.isConnected()) {
 //            if (savedInstanceState == null) {
                 getSupportFragmentManager().beginTransaction()
-                        .add(R.id.content_frame, new MapFragment()).commit();
+                        .add(R.id.content_frame, fragobj).commit();
 //            }
 //        } else {
 //            mDrawerLayout.openDrawer(Gravity.LEFT);
@@ -70,6 +79,10 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(alarmsIntent);
                         break;
                     case R.id.nav_favorites:
+                        //setContentView(R.layout.activity_favorites);
+                        Intent favIntent = new Intent(getApplicationContext(), FavoritesActivity.class );
+                        startActivity(favIntent);
+                        break;
                     case R.id.nav_offline_maps:
                     case R.id.nav_timetables:
                     case R.id.nav_settings:

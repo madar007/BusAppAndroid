@@ -6,22 +6,22 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 
-public class AlarmsActivity extends AppCompatActivity {
+public class FavoritesActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_alarms);
+        setContentView(R.layout.activity_favorites);
 
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction().add(R.id.container_alarm_activity, new AlarmsFragment()).commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.container_fav_activity, new FavoritesFragment()).commit();
         }
 
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar_alarm);
-        toolbar.setTitle("Alarms");
+        toolbar = (Toolbar) findViewById(R.id.toolbar_fav);
+        toolbar.setTitle("Favorites");
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
@@ -43,4 +43,5 @@ public class AlarmsActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
 }

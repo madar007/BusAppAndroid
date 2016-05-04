@@ -52,6 +52,16 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.mashfique.mapdemo.MainActivity" />
         </activity>
+        <activity
+            android:name=".FavoritesActivity"
+            android:label="@string/title_activity_fav"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.mashfique.mapdemo.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

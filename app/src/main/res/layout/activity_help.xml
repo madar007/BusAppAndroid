@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginLeft="@dimen/activity_horizontal_margin"
+    android:layout_marginRight="@dimen/activity_horizontal_margin"
+    android:orientation="vertical"
+    android:weightSum="1">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Help"
+        android:id="@+id/textHelp"
+        android:layout_weight="0.0" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:layout_marginTop="15dp"
+        android:background="@android:color/transparent"
+        android:drawablePadding="3dp"
+        android:hint="UMN Navigation Application"
+    android:singleLine="true"
+    android:imeOptions="actionDone"
+    android:id="@+id/measure_Units" />
+
+    <TextView
+        android:layout_width="333dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Our application is going to be a &quot;Campus Navigator&quot; for the people at the University of Minnesota. It&apos;ll provide routes, real-time locations and times for the buses (Campus Connector, Circulators, etc) here at the university. Additionally, it&apos;ll also provide the best possible directions to travel to any location on campus using the campus buses, along with campus building information.  The goal of the application is to make navigation of the University of Minnesota simple enough that someone who is new here can understand the location of the bus stops, what bus to take, and where to get off to reach any destination on campus."
+        android:id="@+id/textView"
+        android:layout_weight="0.14" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp" />
+
+    <TextView
+        android:layout_width="333dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="The home screen features a map with five tabs on the top that highlight the different bus routes with live monitoring of the buses. Click on any bus stop to get arrival and location information. The From and To textboxes allows the user to enter locations and the map will give a guide on how to reach destination step by step to get to destination. Textual directions are featured at the bottom and step by step visual directions are featured on the map.
+Sliding the three lines on the top left of home screen brings the menu of Alarms, Favorites, Offline Maps, Timetables, Setting and Help.
+"
+        android:id="@+id/textView1"
+        android:layout_weight="0.14" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:layout_marginTop="15dp"
+        android:background="@android:color/transparent"
+        android:drawablePadding="3dp"
+        android:hint="Alarm"
+        android:singleLine="true"
+        android:imeOptions="actionDone"
+        android:id="@+id/tab_Alarm" />
+
+    <TextView
+        android:layout_width="335dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="The alarm feature can be used to add timings when user needs a reminder to go to a certain location or catch the bus"
+        android:id="@+id/textView2"
+        android:layout_weight="0.89" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:layout_marginTop="15dp"
+        android:background="@android:color/transparent"
+        android:drawablePadding="3dp"
+        android:hint="Favorites"
+        android:singleLine="true"
+        android:imeOptions="actionDone"
+        android:id="@+id/tab_Favorites" />
+
+    <TextView
+        android:layout_width="335dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Allows users to add favorite locations they frequent often around campus for easy navigation from anywhere on campus"
+        android:id="@+id/text_fav"
+        android:layout_weight="0.89" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:layout_marginTop="15dp"
+        android:background="@android:color/transparent"
+        android:drawablePadding="3dp"
+        android:hint="Offline Maps"
+        android:singleLine="true"
+        android:imeOptions="actionDone"
+        android:id="@+id/tab_OffM" />
+
+    <TextView
+        android:layout_width="335dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Helps users look over maps of the campus when WiFi access is not available"
+        android:id="@+id/text_OffM"
+        android:layout_weight="0.89" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:layout_marginTop="15dp"
+        android:background="@android:color/transparent"
+        android:drawablePadding="3dp"
+        android:hint="Time Tables"
+        android:singleLine="true"
+        android:imeOptions="actionDone"
+        android:id="@+id/tab_TTable" />
+
+    <TextView
+        android:layout_width="335dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Helps users search busing time tables of frequency and stops in case map is unclear or WiFi access is not available to see buses live"
+        android:id="@+id/text_TTable"
+        android:layout_weight="0.89" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:layout_marginTop="15dp"
+        android:background="@android:color/transparent"
+        android:drawablePadding="3dp"
+        android:hint="Settings"
+        android:singleLine="true"
+        android:imeOptions="actionDone"
+        android:id="@+id/tab_Set" />
+
+    <TextView
+        android:layout_width="335dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Allows user to set home location, units of measurement for distance in navigation, and to turn on bus icon in home screen. "
+        android:id="@+id/text_set"
+        android:layout_weight="0.89" />
+
+
+
+</LinearLayout>

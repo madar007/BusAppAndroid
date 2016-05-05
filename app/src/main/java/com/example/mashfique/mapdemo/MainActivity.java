@@ -19,12 +19,14 @@ import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.Toast;
-import java.util.List;
+
+import java.util.Set;
 
 
-public class MainActivity extends AppCompatActivity implements FabDialog.OnSelectedFocusListener{
+public class MainActivity extends AppCompatActivity implements FocusFabDialog.OnSelectedFocusListener{
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mDrawerNav;
@@ -46,19 +48,9 @@ public class MainActivity extends AppCompatActivity implements FabDialog.OnSelec
         initFab();
 
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorLayout);
-//
-//        Intent intent = getIntent();
-//        favorite = intent.getStringExtra("favorite");
-//
-//        Bundle bundle = new Bundle();
-//        bundle.putString("favText", favorite);
-//// set Fragmentclass Arguments
-//        MapFragment fragobj = new MapFragment();
-//        fragobj.setArguments(bundle);
-//
 //        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 //        NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-//        ImageView test = (ImageView) findViewById(R.id.offline_image);
+//        ImageView offlineImage = (ImageView) findViewById(R.id.offline_image);
 //        if (mWifi.isConnected()) {
 //            if (savedInstanceState == null) {
                 mapFragment = new MapFragment();
@@ -200,8 +192,17 @@ public class MainActivity extends AppCompatActivity implements FabDialog.OnSelec
                         break;
                     case R.id.nav_offline_maps:
                     case R.id.nav_timetables:
+                        Intent timeTableIntent = new Intent(getApplicationContext(), TimeTableActivity.class);
+                        startActivity(timeTableIntent);
+                        break;
                     case R.id.nav_settings:
+                        Intent settingsIntent = new Intent(getApplicationContext(), SettingsActivity.class);
+                        startActivity(settingsIntent);
+                        break;
                     case R.id.nav_help_feedback:
+                        Intent helpIntent = new Intent(getApplicationContext(), HelpActivity.class);
+                        startActivity(helpIntent);
+                        break;
                     default:
                         String selectedFeature = item.getTitle().toString();
                         Toast sampleToast = Toast.makeText(getApplicationContext(), selectedFeature, Toast.LENGTH_SHORT);
@@ -215,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements FabDialog.OnSelec
     }
 
     private void initFab() {
-        final DialogFragment newFragment = new FabDialog();
+        final DialogFragment newFragment = new FocusFabDialog();
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -238,6 +239,6 @@ public class MainActivity extends AppCompatActivity implements FabDialog.OnSelec
 
     @Override
     public void onSelectedFocus(String location) {
-        mapFragment.refocus(location);
+        mapFragment.fabRefocus(location);
     }
 }

@@ -6,9 +6,11 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 
-public class FavoritesActivity extends AppCompatActivity {
+public class FavoritesActivity extends AppCompatActivity
+    implements AddFavoriteFragment.OnNewFavoritesCreationListener{
 
     private Toolbar toolbar;
+    private FavoritesFragment favoritesFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -16,7 +18,8 @@ public class FavoritesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_favorites);
 
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction().add(R.id.container_fav_activity, new FavoritesFragment()).commit();
+            favoritesFragment = new FavoritesFragment();
+            getSupportFragmentManager().beginTransaction().add(R.id.container_fav_activity, favoritesFragment).commit();
         }
 
 
@@ -44,4 +47,8 @@ public class FavoritesActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onNewFavoritesCreation(Favorite newFavorite) {
+        favoritesFragment.addFavorite(newFavorite);
+    }
 }

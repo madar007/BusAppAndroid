@@ -3,6 +3,7 @@ package com.example.mashfique.mapdemo;
 
 import android.app.Activity;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
@@ -13,13 +14,16 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -34,11 +38,12 @@ public class AddAlarmFragment extends Fragment {
     private Toolbar toolbar;
     private String activityToolbarTitle;
     private EditText alarmName;
-    private EditText busStop;
+    private AutoCompleteTextView busStop;
+    private ArrayAdapter<String> busStopAdapter;
     private CheckBox[] days;
     private Button atTime;
     private Spinner beforeSpinner;
-    private Button frequency;
+    private Spinner frequencySpinner;
     private Alarm newAlarm;
     private OnNewAlarmCreationListener mListener;
 
@@ -76,9 +81,26 @@ public class AddAlarmFragment extends Fragment {
         initBeforeSpinner(view);
         initCheckboxes(view);
         alarmName = (EditText) view.findViewById(R.id.alarm_name_field);
-        busStop = (EditText) view.findViewById(R.id.alarm_bus_stop_search);
-        frequency = (Button) view.findViewById(R.id.button_alarm_frequency);
+        initBusStopsearch(view);
+        initFrequencySpinner(view);
+        busStop = (AutoCompleteTextView) view.findViewById(R.id.alarm_bus_stop_search);
+        //frequencySpinner = (Button) view.findViewById(R.id.button_alarm_frequency);
 
+    }
+
+    private void initBusStopsearch(View rootView) {
+        initBusStopAdapter();
+        busStop = (AutoCompleteTextView) rootView.findViewById(R.id.alarm_bus_stop_search);
+        busStop.setAdapter(busStopAdapter);
+        busStop.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                InputMethodManager inputMethodManager = (InputMethodManager)
+                        getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+            }
+        });
     }
 
     private void initAtTimeButton(View rootView) {
@@ -86,26 +108,9 @@ public class AddAlarmFragment extends Fragment {
         Calendar calendar = Calendar.getInstance();
         final int hour = calendar.get(Calendar.HOUR_OF_DAY);
         final int minute = calendar.get(Calendar.MINUTE);
-        String badMinuteHack = Integer.toString(minute);
 
-        if (minute < 10) {
-            badMinuteHack = "0" + minute;
-        }
-
-        if (hour >= 12) {
-            if (hour == 12) {
-                atTime.setText("At " + 12 + ":" + badMinuteHack + "PM");
-            } else {
-                atTime.setText("At " + (hour - 12) + ":" + badMinuteHack + "PM");
-            }
-        } else {
-            if (hour == 0) {
-                atTime.setText("At " + 12 + ":" + badMinuteHack + "AM");
-            } else {
-                atTime.setText("At " + hour + ":" + badMinuteHack + "AM");
-            }
-
-        }
+        String currentTime = UnitsConverter.militaryTo12Hour(hour, minute);
+        atTime.setText("At " + currentTime);
 
         atTime.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,21 +119,10 @@ public class AddAlarmFragment extends Fragment {
                 timePicker = new TimePickerDialog(getContext(), new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        String period = "AM";
-                        if (hourOfDay >= 12) {
-                            if (hourOfDay > 12) {
-                                hourOfDay = hourOfDay - 12;
-                            }
-                            period = "PM";
-                        } else if (hourOfDay == 0) {
-                            hourOfDay = 12;
-                        }
-
-                        if (minute < 10) {
-                            atTime.setText("At " + hourOfDay + ":" + "0" + minute + period);
-                        } else {
-                            atTime.setText("At " + hourOfDay + ":" + minute + period);
-                        }
+                        String chosenTime = UnitsConverter.militaryTo12Hour(hourOfDay, minute);
+                        atTime.setText("At " + chosenTime);
+                        newAlarm.setAtHour(hourOfDay);
+                        newAlarm.setAtMin(minute);
                     }
                 }, hour, minute, false);
                 timePicker.setTitle("Select Time");
@@ -165,8 +159,19 @@ public class AddAlarmFragment extends Fragment {
 
     }
 
-    private void initFrequencyButton() {
-        frequency = (Button) getActivity().findViewById(R.id.button_alarm_frequency);
+    private void initFrequencySpinner(View rootView) {
+        frequencySpinner = (Spinner) rootView.findViewById(R.id.dialog_edit_spinner_alarm_frequency);
+        List<String> freqValues = new ArrayList<>();
+        freqValues.add("One-time alarm");
+        freqValues.add("Every week");
+        freqValues.add("Every 2 weeks");
+        freqValues.add("Every 3 weeks");
+
+        ArrayAdapter<String> spinnerValues = new ArrayAdapter<>(getActivity().getApplicationContext(),
+                R.layout.spinner_item_alarm, freqValues);
+
+        frequencySpinner.setAdapter(spinnerValues);
+        frequencySpinner.setSelection(0);
     }
 
     private void initCheckboxes(View rootView) {
@@ -195,16 +200,21 @@ public class AddAlarmFragment extends Fragment {
     }
 
     private void addAlarm() {
-        newAlarm.setAlarmName(alarmName.getText().toString());
-        newAlarm.setBusStop(busStop.getText().toString());
-        setAlarmDays();
-        newAlarm.setBeforeTime(beforeSpinner.getSelectedItem().toString());
-        newAlarm.setAtTime(atTime.getText().toString());
-        newAlarm.setFrequency(frequency.getText().toString());
+        if (busStop.getText().toString().matches("")) {
+            Toast.makeText(getContext(), "Please select a bus stop", Toast.LENGTH_SHORT).show();
+        } else {
+            newAlarm.setAlarmName(alarmName.getText().toString());
+            newAlarm.setBusStop(busStop.getText().toString());
+            setAlarmDays();
+            newAlarm.setBeforeTime(beforeSpinner.getSelectedItem().toString());
+            newAlarm.setAtTime(atTime.getText().toString());
+            newAlarm.setFrequency(frequencySpinner.getSelectedItem().toString());
+            newAlarm.turnOn();
 
-        mListener.onNewAlarmCreation(newAlarm);
-        toolbar.setTitle(activityToolbarTitle);
-        getActivity().getSupportFragmentManager().popBackStack();
+            mListener.onNewAlarmCreation(newAlarm);
+            toolbar.setTitle(activityToolbarTitle);
+            getActivity().getSupportFragmentManager().popBackStack();
+        }
     }
 
     private void setAlarmDays() {
@@ -229,4 +239,65 @@ public class AddAlarmFragment extends Fragment {
                     activity.getClass().getSimpleName() + " must implement OnNewAlarmCreationListener!");
         }
     }
+
+    private void initBusStopAdapter() {
+        List<String> universityCirculator = new ArrayList<>();
+        universityCirculator.add("Northrop");
+        universityCirculator.add("Willey Hall");
+        universityCirculator.add("Carlson School of Management");
+        universityCirculator.add("Mondale Hall");
+        universityCirculator.add("Sanford Hall");
+        universityCirculator.add("University Ave. @ 15th Ave.");
+        universityCirculator.add("University Ave. @ Rec Center");
+        universityCirculator.add("McNamara Alumni Center");
+
+        List<String> fourthSt = new ArrayList<>();
+        fourthSt.add("Coffman");
+        fourthSt.add("Oak Street @ University Ave.");
+        fourthSt.add("Ridder Arena");
+        fourthSt.add("4th Street @ 15th Ave");
+        fourthSt.add("10th Ave. @ University Ave");
+        fourthSt.add("19th Avenue Ramp");
+        fourthSt.add("Blegen Hall");
+
+        List<String> stadiumCirculator = new ArrayList<>();
+        stadiumCirculator.add("Masonic Memorial Building");
+        stadiumCirculator.add("Clinic & Surgery Center");
+        stadiumCirculator.add("Thompson Center");
+        stadiumCirculator.add("Center for Magnetic Resonance Research");
+
+        List<String> stPaulCirculator = new ArrayList<>();
+        stPaulCirculator.add("St. Paul Student Center");
+        stPaulCirculator.add("Dudley & Cleveland Ave.");
+        stPaulCirculator.add("Coffman St. & Folwell Ave.");
+        stPaulCirculator.add("Larpenteur Ave. & Coffman St.");
+        stPaulCirculator.add("Hodson Hall & Folwell Ave.");
+        stPaulCirculator.add("Gortner & Dudley Ave.");
+        stPaulCirculator.add("Buford & Gortner Ave.");
+        stPaulCirculator.add("Veterinary Medical Center");
+        stPaulCirculator.add("Transitway & Commonwealth");
+        stPaulCirculator.add("Como Ave. & Raleigh St.");
+        stPaulCirculator.add("Como & Clevland Ave.");
+        stPaulCirculator.add("Eckles & Carter Ave.");
+
+        List<String> connector = new ArrayList<>();
+        connector.add("TransitWay @ 23rd Ave.");
+        connector.add("State Fairgrounds Lot S-108");
+        connector.add("St. Paul Student Center");
+        connector.add("Pleasant St. @ Jones-Eddy Circle");
+        connector.add("Bruininks Hall");
+
+        List<String> allStops = new ArrayList<>();
+        allStops.addAll(universityCirculator);
+        allStops.addAll(fourthSt);
+        allStops.addAll(stadiumCirculator);
+        allStops.addAll(stPaulCirculator);
+        allStops.addAll(connector);
+
+        busStopAdapter = new ArrayAdapter<String>(getContext(), R.layout.bus_stop_list_item, allStops);
+    }
+
+
+
+
 }

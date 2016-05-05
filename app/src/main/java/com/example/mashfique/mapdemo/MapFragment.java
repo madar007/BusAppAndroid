@@ -33,9 +33,9 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.PlaceDetectionApi;
 import com.google.android.gms.location.places.Places;
-import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -47,6 +47,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.xml.sax.InputSource;
@@ -76,6 +77,7 @@ public class MapFragment extends Fragment
 
     private MapView mMapView;
     private static GoogleMap mGoogleMap;
+    private GoogleApiClient mGoogleApiClient;
     private Timer timer;
     private TimerTask timerMarkerTask;
     private Handler animationHandler;
@@ -99,6 +101,9 @@ public class MapFragment extends Fragment
     private FloatingActionButton fab_direc_prev;
     private FloatingActionButton fab_direc_next;
     private FloatingActionButton fab_direc_stop;
+    private HashMap<String, Polyline> routePolyLines;
+    private Marker[] startEndMarker;
+    private Marker queryMarker;
 
     private String favText;
 
@@ -115,6 +120,11 @@ public class MapFragment extends Fragment
 //        favText = getArguments().getString("favText");
         animationHandler = new Handler();
         toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+
+        mGoogleApiClient = new GoogleApiClient.Builder(getContext())
+                .addApi(Places.GEO_DATA_API).build();
+        mGoogleApiClient.connect();
+
         initTabs();
         initBottomSheet();
         initDirectionFabs();
@@ -141,6 +151,13 @@ public class MapFragment extends Fragment
                 if (!directionsStack.isEmpty()) {
                     Step previousStep = directionsStack.pop();
                     directionsAdapter.insert(previousStep, 0);
+                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(previousStep.getEndLocation(), 17), 1500, null);
+                    if (queryMarker != null) {
+                        queryMarker.remove();
+                    }
+                    queryMarker = mGoogleMap.addMarker(new MarkerOptions()
+                            .position(previousStep.getEndLocation())
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
                     directionsAdapter.notifyDataSetChanged();
                 }
             }
@@ -153,6 +170,13 @@ public class MapFragment extends Fragment
                     Step currentStep = directionsAdapter.getItem(0);
                     directionsStack.push(currentStep);
                     directionsAdapter.remove(currentStep);
+                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentStep.getEndLocation(), 17f), 1500, null);
+                    if (queryMarker != null) {
+                        queryMarker.remove();
+                    }
+                    queryMarker = mGoogleMap.addMarker(new MarkerOptions()
+                            .position(currentStep.getEndLocation())
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
                     directionsAdapter.notifyDataSetChanged();
                 }
             }
@@ -161,8 +185,14 @@ public class MapFragment extends Fragment
         fab_direc_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                clearRouteDrawings();
+                if (queryMarker != null) {
+                    queryMarker.remove();
+                }
+                queryMarker = null;
                 directionsAdapter.clear();
                 directionsAdapter.notifyDataSetChanged();
+                directionsSheet.setHideable(true);
                 directionsSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
                 fab_direc_next.hide();
                 fab_direc_stop.hide();
@@ -173,6 +203,18 @@ public class MapFragment extends Fragment
             }
         });
 
+    }
+
+    private void clearRouteDrawings() {
+        if (routePolyLines != null && startEndMarker != null) {
+            for (Polyline polyline : routePolyLines.values()) {
+                polyline.remove();
+            }
+            routePolyLines.clear();
+            startEndMarker[0].remove();
+            startEndMarker[1].remove();
+            startEndMarker = null;
+        }
     }
 
     private void initMap(Bundle savedInstanceState) {
@@ -251,11 +293,12 @@ public class MapFragment extends Fragment
                         InputMethodManager.HIDE_NOT_ALWAYS);
 
                 if (!toSearch.getText().toString().matches("")) {
-                    String m = from.getPlaceID();
-                    //showDirections(from.getPlaceID(), to.getPlaceID());
-                    showDirections("ChIJWzc6sRcts1IRBK-Dyxa2BGw", "ChIJi2l8AD4ts1IR6hQ3FDu_3Qk");
+                    queryMarker.remove();
+                    showDirections(from.getPlaceID(), to.getPlaceID());
+                } else {
+                    focusOnSearch(from.getPlaceID());
                 }
-
+                fromSearch.clearFocus();
             }
         });
 
@@ -269,10 +312,12 @@ public class MapFragment extends Fragment
                         InputMethodManager.HIDE_NOT_ALWAYS);
 
                 if (!fromSearch.getText().toString().matches("")) {
-                    String m = from.getPlaceID();
-                    //showDirections(from.getPlaceID(), to.getPlaceID());
-                    showDirections("ChIJWzc6sRcts1IRBK-Dyxa2BGw", "ChIJi2l8AD4ts1IR6hQ3FDu_3Qk");
+                    queryMarker.remove();
+                    showDirections(from.getPlaceID(), to.getPlaceID());
+                } else {
+                    focusOnSearch(to.getPlaceID());
                 }
+                toSearch.clearFocus();
             }
         });
         if(favText != null ){
@@ -367,45 +412,158 @@ public class MapFragment extends Fragment
         });
     }
 
+    private void focusOnSearch(String placeID) {
+        if (queryMarker != null) {
+            queryMarker.remove();
+        }
 
-    public void refocus(String location) {
+        Places.GeoDataApi.getPlaceById(mGoogleApiClient, placeID)
+                .setResultCallback(new ResultCallback<PlaceBuffer>() {
+                    @Override
+                    public void onResult(PlaceBuffer places) {
+                        if (places.getStatus().isSuccess() && places.getCount() > 0) {
+                            Place place = places.get(0);
+                            LatLng placeLatLng = place.getLatLng();
+                            mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 18), 1500, null);
+                            queryMarker = mGoogleMap.addMarker(new MarkerOptions().position(placeLatLng));
+                        }
+                        places.release();
+                    }
+                });
+    }
+
+    public void fabRefocus(String location) {
         switch (location) {
             case "Current Location":
+                focusOnCurrentLocation();
                 break;
             case "East Bank":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.974825, -93.229518), 15f));
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.974825, -93.229518), 15f), 1500, null);
                 break;
             case "West Bank":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.971612, -93.241614), 16f));
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.971612, -93.241614), 16f), 1500, null);
                 break;
             case "St. Paul":
-                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.984442, -93.1836874), 15f));
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(44.984442, -93.1836874), 15f), 1500, null);
                 break;
         }
     }
 
-    private void placeBusMarkers() {
-        // ************************** Fake Buses:
-        Marker bus1 = mGoogleMap.addMarker(new MarkerOptions()
-                .position(new LatLng(44.976543, -93.2263679)).title("This is bus1")
-                .anchor((float) 0.5, (float) 0.5)
-                .rotation((float) 305.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
-                .flat(true));
+    public void focusOnCurrentLocation() {
+        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        LocationListener locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                double lat = location.getLatitude();
+                double lng = location.getLongitude();
+                LatLng currentLocation = new LatLng(lat, lng);
+                mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f));
+                if (queryMarker != null) {
+                    queryMarker.remove();
+                }
+                queryMarker = mGoogleMap.addMarker(new MarkerOptions()
+                        .position(currentLocation));
+            }
 
-        Marker bus2 = mGoogleMap.addMarker(new MarkerOptions()
-                .position(new LatLng(44.975195, -93.245857)).title("This is bus2")
-                .anchor((float) 0.5, (float) 0.5)
-                .rotation((float) 180.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
-                .flat(true));
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
 
-        Marker bus3 = mGoogleMap.addMarker(new MarkerOptions()
-                .position(new LatLng(44.971342, -93.247091)).title("This is bus3")
-                .anchor((float) 0.5, (float) 0.5)
-                .rotation((float) 70.0)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
-                .flat(true));
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        Location lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if (lastLocation == null) {
+            Toast.makeText(getContext(), "Turn on your phone's location services", Toast.LENGTH_SHORT).show();
+        } else {
+            locationListener.onLocationChanged(lastLocation);
+        }
+        locationManager.removeUpdates(locationListener);
+    }
+
+    @Override
+    public void processDirectionsResult(List<Route> results) {
+        directionsAdapter.clear();
+        if ((results != null) && (results.size() > 0)) {
+            directionsAdapter.addAll(results.get(0).getListOfSteps());
+            drawRoute(results.get(0));
+        } else {
+            directionsAdapter.add(Step.getErrorStep());
+            directionsAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void showDirections(String fromPlace_ID, String toPlace_ID) {
+        DirectionFetcher fetcher = new DirectionFetcher(fromPlace_ID, toPlace_ID);
+        fetcher.fetch(this);
+        directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
+        directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        if (directionsStack == null) {
+            directionsStack = new Stack<>();
+        }
+        fab_direc_prev.show();
+        fab_direc_next.show();
+        fab_direc_stop.show();
+        directionsSheet.setHideable(false);
+    }
+
+    private void drawRoute(Route results) {
+        List<Step> steps = results.getListOfSteps();
+        if (routePolyLines == null) {
+            routePolyLines = new HashMap<>();
+        }
+
+        for (Step step : steps) {
+            PolylineOptions polylineOptions = step.getPolylineOptions();
+            polylineOptions.color(Color.BLUE);
+            polylineOptions.width(10);
+            polylineOptions.geodesic(false);
+            polylineOptions.zIndex(1.0f);
+            Polyline polyline = mGoogleMap.addPolyline(polylineOptions);
+            routePolyLines.put(polyline.getId(), polyline);
+        }
+
+        startEndMarker = new Marker[2];
+        startEndMarker[0] = mGoogleMap.addMarker(new MarkerOptions().position(results.getStartLatLng())
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+
+        startEndMarker[1] = mGoogleMap.addMarker(new MarkerOptions().position(results.getEndLatLng())
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(results.getLatLngBound(), 10), 1500, null);
+    }
+
+    private void redrawRoutes() {
+        if (routePolyLines != null && routePolyLines.size() > 0) {
+            HashMap<String, Polyline> redrawnPolylines = new HashMap<>();
+            for (String polyKey : routePolyLines.keySet()) {
+                PolylineOptions polylineOption = new PolylineOptions();
+                polylineOption.addAll(routePolyLines.get(polyKey).getPoints());
+                polylineOption.color(Color.BLUE);
+                polylineOption.width(10);
+                polylineOption.geodesic(false);
+
+                Polyline polyline = mGoogleMap.addPolyline(polylineOption);
+                redrawnPolylines.put(polyline.getId(), polyline);
+            }
+            routePolyLines = redrawnPolylines;
+
+            Marker startMarker = startEndMarker[0];
+            Marker endMarker = startEndMarker[1];
+
+            startEndMarker[0] = mGoogleMap.addMarker(new MarkerOptions().position(startMarker.getPosition())
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+            startEndMarker[1] = mGoogleMap.addMarker(new MarkerOptions().position(endMarker.getPosition())
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+        }
     }
 
     @Override
@@ -413,7 +571,6 @@ public class MapFragment extends Fragment
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
         mGoogleMap = googleMap;
-        mGoogleMap.setMyLocationEnabled(true);
         mGoogleMap.getUiSettings().setMyLocationButtonEnabled(false);
         mGoogleMap.getUiSettings().setCompassEnabled(true);
         new FetchBusRouteTask(MapFragment.this).execute("routeConfig", "umn-twin", "4thst");
@@ -423,17 +580,10 @@ public class MapFragment extends Fragment
 
         if (ContextCompat.checkSelfPermission(mMapView.getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            mGoogleMap.setMyLocationEnabled(true);
+            mGoogleMap.setMyLocationEnabled(false);
         } else {
             // Show rationale and request permission.
         }
-        View btnMyLocation = ((View) mMapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100, 100); // size of button in dp
-        //params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
-        params.addRule(RelativeLayout.ABOVE, RelativeLayout.TRUE);
-        params.setMargins(20, 1000, 0, 200);
-
-        btnMyLocation.setLayoutParams(params);
     }
 
     public void animateMarker(final Marker marker, final LatLng toPosition, final boolean hideMarker) {
@@ -584,7 +734,6 @@ public class MapFragment extends Fragment
                         bus = entry.getValue();
                         if (busMarkerMap.containsKey(id)) {     // Update Bus
                             busesMap.put(id, bus);
-                            System.out.println("BUS UPDATES.....");
                             double latitude = busesMap.get(id).getLat();
                             double longitude = busesMap.get(id).getLon();
                             float angle = (float) busesMap.get(id).getAngle();
@@ -592,7 +741,6 @@ public class MapFragment extends Fragment
                             animateMarker(busMarkerMap.get(id), new LatLng(latitude, longitude), false);
                         } else {      // busesMap doesn't contain a bus, so add it to busesMap and mGoogleMap
                             busesMap.put(id, bus);
-                            System.out.println("Adding new bus...");
                             MarkerOptions busMarkerOptions = new MarkerOptions()
                                     .position(new LatLng(bus.getLat(), bus.getLon())).title("bus: " + bus.getId())
                                     .anchor((float) 0.5, (float) 0.5)
@@ -620,15 +768,28 @@ public class MapFragment extends Fragment
         }
     }
 
-    @Override
-    public void processDirectionsResult(List<Route> results) {
-        directionsAdapter.clear();
-        if ((results != null) && (results.size() > 0)) {
-            directionsAdapter.addAll(results.get(0).getListOfSteps());
-        } else {
-            directionsAdapter.add(Step.getErrorStep());
-        }
-        directionsAdapter.notifyDataSetChanged();
+    private void placeBusMarkers() {
+        // ************************** Fake Buses:
+        Marker bus1 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.976543, -93.2263679)).title("This is bus1")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 305.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
+
+        Marker bus2 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.975195, -93.245857)).title("This is bus2")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 180.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
+
+        Marker bus3 = mGoogleMap.addMarker(new MarkerOptions()
+                .position(new LatLng(44.971342, -93.247091)).title("This is bus3")
+                .anchor((float) 0.5, (float) 0.5)
+                .rotation((float) 70.0)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_busmarker))
+                .flat(true));
     }
 
     private void startAnimationTimer() {
@@ -681,24 +842,6 @@ public class MapFragment extends Fragment
         if (timer != null) {
             timer.cancel();
             timer = null;
-        }
-    }
-
-    private void showDirections(String fromPlace_ID, String toPlace_ID) {
-        DirectionFetcher fetcher = new DirectionFetcher(fromPlace_ID, toPlace_ID);
-        fetcher.fetch(this);
-        directionsSheet.setPeekHeight(UnitsConverter.dpToPx(75));
-        try {
-            directionsSheet.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            if (directionsStack == null) {
-                directionsStack = new Stack<>();
-            }
-            fab_direc_prev.show();
-            fab_direc_next.show();
-            fab_direc_stop.show();
-        }
-        catch(Exception e){
-
         }
     }
 

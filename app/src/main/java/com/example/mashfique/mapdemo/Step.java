@@ -20,7 +20,7 @@ public class Step {
     String transit_arrival_name;
 
     public Step() {
-
+        travelMode="";
     }
 
     public String getDistance() {
@@ -96,13 +96,12 @@ public class Step {
     }
 
     public String toString() {
-        switch (travelMode) {
-            case "WALKING":
-                return instructions + " - " + distance;
-            case "TRANSIT":
-                return instructions + " and get off at " + transit_arrival_name;
-            default:
-                return "No route found!";
+        if (travelMode.equals("WALKING")) {
+            return instructions + " - " + distance;
+        } else if (travelMode.equals("TRANSIT")) {
+            return instructions + " and get off at " + transit_arrival_name;
+        } else {
+            return "No route found!";
         }
     }
 

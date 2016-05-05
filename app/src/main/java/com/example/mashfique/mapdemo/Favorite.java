@@ -1,9 +1,11 @@
 package com.example.mashfique.mapdemo;
 
+import java.io.Serializable;
+
 /**
  * Created by Ragnarok on 4/14/2016.
  */
-public class Favorite {
+public class Favorite implements Serializable{
 
     private String favoriteName;
 
@@ -25,9 +27,9 @@ public class Favorite {
 
     public String toString() {
         final String DELIMITER = " - ";
-        String alarm = "";
-        alarm.concat(favoriteName);
-        return alarm;
+        String favorite = "";
+        favorite.concat(favoriteName);
+        return favorite;
     }
 
 }

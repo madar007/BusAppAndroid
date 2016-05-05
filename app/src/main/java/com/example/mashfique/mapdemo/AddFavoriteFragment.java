@@ -1,12 +1,12 @@
 package com.example.mashfique.mapdemo;
 
 
-import android.app.TimePickerDialog;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -15,17 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TimePicker;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
 
 
 /**
@@ -39,6 +29,7 @@ public class AddFavoriteFragment extends Fragment {
     private Favorite newFav;
     private GooglePlacesAutocompleteAdapter mPlacesAdapter;
     private GooglePlacesPrediction building;
+    private OnNewFavoritesCreationListener mListener;
 
 
     public AddFavoriteFragment() {
@@ -113,10 +104,26 @@ public class AddFavoriteFragment extends Fragment {
     }
 
     private void addFavorite() {
+        newFav = new Favorite();
         newFav.setFavoriteName(favName.getText().toString());
-        System.out.println(newFav.toString());
+        mListener.onNewFavoritesCreation(newFav);
         toolbar.setTitle(activityToolbarTitle);
         getActivity().getSupportFragmentManager().popBackStack();
+    }
+
+    public interface OnNewFavoritesCreationListener {
+        void onNewFavoritesCreation(Favorite newFavorite);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnNewFavoritesCreationListener) activity;
+        } catch (ClassCastException e) {
+            Log.e(AddFavoriteFragment.class.getSimpleName(),
+                    activity.getClass().getSimpleName() + " must implement OnNewFavoriteCreationListener!");
+        }
     }
 
 

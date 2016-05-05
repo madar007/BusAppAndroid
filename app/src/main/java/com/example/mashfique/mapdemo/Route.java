@@ -1,5 +1,8 @@
 package com.example.mashfique.mapdemo;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +18,9 @@ public class Route {
     private String departure_time;
     private String distance;
     private String duration;
+    private LatLng startLatLng;
+    private LatLng endLatLng;
+    private LatLngBounds routeBounds;
 
     public Route() {
         listOfSteps = new ArrayList<>();
@@ -91,4 +97,29 @@ public class Route {
         routeSummary = routeSummary + "DURATION - " + duration;
         return routeSummary;
     }
+
+    public LatLng getStartLatLng() {
+        return startLatLng;
+    }
+
+    public void setStartLatLng(LatLng startLatLng) {
+        this.startLatLng = startLatLng;
+    }
+
+    public LatLng getEndLatLng() {
+        return endLatLng;
+    }
+
+    public void setEndLatLng(LatLng endLatLng) {
+        this.endLatLng = endLatLng;
+    }
+
+    public LatLngBounds getLatLngBound() {
+        return routeBounds;
+    }
+
+    public void setLatLngBounds(LatLng southWestBound, LatLng northEastBound) {
+        routeBounds = new LatLngBounds(southWestBound, northEastBound);
+    }
+
 }

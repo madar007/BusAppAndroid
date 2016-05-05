@@ -78,13 +78,17 @@ public class MainActivity extends AppCompatActivity implements FocusFabDialog.On
                         startActivity(alarmsIntent);
                         break;
                     case R.id.nav_favorites:
+                        break;
                     case R.id.nav_offline_maps:
+                        break;
                     case R.id.nav_timetables:
                         Intent timeTableIntent = new Intent(getApplicationContext(), TimeTableActivity.class);
                         startActivity(timeTableIntent);
                         break;
                     case R.id.nav_settings:
+                        break;
                     case R.id.nav_help_feedback:
+                        break;
                     default:
                         String selectedFeature = item.getTitle().toString();
                         Toast sampleToast = Toast.makeText(getApplicationContext(), selectedFeature, Toast.LENGTH_SHORT);

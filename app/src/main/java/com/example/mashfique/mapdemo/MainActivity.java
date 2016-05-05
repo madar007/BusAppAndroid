@@ -139,10 +139,16 @@ public class MainActivity extends AppCompatActivity implements FocusFabDialog.On
                             //snackbar.dismiss();
                         }
                     });
+            ((AutoCompleteTextView) findViewById(R.id.autocomplete_from_main)).setVisibility(View.VISIBLE);
+            ((AutoCompleteTextView) findViewById(R.id.autocomplete_to_main)).setVisibility(View.VISIBLE);
+            ((FloatingActionButton) findViewById(R.id.fab)).show();
         } else {
             internetStatus = "Internet Connection Lost - Working Offline";
             snackbar = Snackbar
                     .make(coordinatorLayout, internetStatus, Snackbar.LENGTH_INDEFINITE);
+            ((AutoCompleteTextView) findViewById(R.id.autocomplete_from_main)).setVisibility(View.INVISIBLE);
+            ((AutoCompleteTextView) findViewById(R.id.autocomplete_to_main)).setVisibility(View.INVISIBLE);
+            ((FloatingActionButton) findViewById(R.id.fab)).hide();
         }
 
         // Changing message text color
@@ -191,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements FocusFabDialog.On
                         startActivity(favIntent);
                         break;
                     case R.id.nav_offline_maps:
+                        break;
                     case R.id.nav_timetables:
                         Intent timeTableIntent = new Intent(getApplicationContext(), TimeTableActivity.class);
                         startActivity(timeTableIntent);

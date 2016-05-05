@@ -39,9 +39,8 @@ import com.daimajia.swipe.adapters.BaseSwipeAdapter;
 
 public class FavoritesFragment extends Fragment {
 
-    private FavoriteSwipeAdapter mFavoritesAdapter;
+    private static FavoriteSwipeAdapter mFavoritesAdapter;
     private FloatingActionButton fab;
-    private AddFavoriteFragment favFrag;
     private ListView favorites;
 
 
@@ -50,7 +49,6 @@ public class FavoritesFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         initFab();
         super.onCreate(savedInstanceState);
-        favFrag = new AddFavoriteFragment();
     }
 
     private void initFab() {
@@ -60,7 +58,7 @@ public class FavoritesFragment extends Fragment {
             public void onClick(View view) {
                 mFavoritesAdapter.notifyDataSetChanged();
                 getActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.container_fav_activity, favFrag, null)
+                        .replace(R.id.container_fav_activity, new AddFavoriteFragment(), null)
                         .addToBackStack(null)
                         .commit();
                 fab.hide();
@@ -92,7 +90,6 @@ public class FavoritesFragment extends Fragment {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent mainIntent = new Intent(view.getContext(), MainActivity.class);
-                mainIntent.putExtra("favorite", favFrag.getFavName());
                 startActivity(mainIntent);
                 return false;
             }
@@ -139,7 +136,6 @@ public class FavoritesFragment extends Fragment {
 
     public void addFavorite(Favorite newFavorite) {
         Toast.makeText(getContext(), "Favorite Added!", Toast.LENGTH_SHORT).show();
-        newFavorite = new Favorite("This is a test");
         mFavoritesAdapter.add(newFavorite);
         mFavoritesAdapter.notifyDataSetChanged();
     }

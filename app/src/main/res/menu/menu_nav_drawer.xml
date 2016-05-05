@@ -16,7 +16,6 @@
             android:id="@+id/nav_offline_maps"
             android:icon="@drawable/ic_map_black_24dp"
             android:title="Offline Maps" />
-
         <item
             android:id="@+id/nav_timetables"
             android:icon="@drawable/ic_directions_bus_black_24dp"
@@ -33,7 +32,7 @@
         <item
             android:id="@+id/nav_help_feedback"
             android:icon="@drawable/ic_info_black_24dp"
-            android:title="Help and Feedback" />
+            android:title="Help" />
     </group>
 
 </menu>

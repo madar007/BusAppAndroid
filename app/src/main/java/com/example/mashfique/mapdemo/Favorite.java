@@ -28,7 +28,7 @@ public class Favorite implements Serializable{
     public String toString() {
         final String DELIMITER = " - ";
         String favorite = "";
-        favorite.concat(favoriteName);
+        favorite = favorite.concat(favoriteName);
         return favorite;
     }
 
